@@ -22,13 +22,14 @@ wheels/
 MANIFEST
 *.log
 .env
+.env.local
 .venv
 env/
 venv/
 ENV/
 env.bak/
 venv.bak/
-
+sentiment/.env.local
 # Database files
 *.db
 *.sqlite

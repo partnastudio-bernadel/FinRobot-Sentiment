@@ -1,0 +1,10 @@
+openbb
+openbb-yfinance
+openbb-biztoc
+openbb-tmx
+pandas
+ipykernel
+requests
+beautifulsoup4
+python-dotenv
+playwright

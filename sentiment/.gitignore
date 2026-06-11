@@ -1,0 +1,9 @@
+.env
+.env.local
+.venv
+venv/
+__pycache__/
+*.pyc
+.ruff_cache/
+data/news_*.csv
+data/news_*.json
