@@ -99,7 +99,49 @@ import datetime
 
 import autogen
 
-from finrobot.agents.workflow import SingleAssistant
+class SingleAssistant:
+    def __init__(
+        self,
+        agent_config,
+        llm_config={},
+        is_termination_msg=lambda x: x.get("content", "") and x.get("content", "").strip().endswith("TERMINATE"),
+        human_input_mode="NEVER",
+        max_consecutive_auto_reply=10,
+        code_execution_config={
+            "work_dir": "coding",
+            "use_docker": False,
+        },
+        **kwargs
+    ):
+        name = agent_config["name"].replace(" ", "_").strip()
+        system_message = agent_config["profile"]
+        description = agent_config["description"]
+        
+        self.assistant = autogen.AssistantAgent(
+            name=name,
+            system_message=system_message,
+            description=description,
+            llm_config=llm_config,
+        )
+        self.user_proxy = autogen.UserProxyAgent(
+            name="User_Proxy",
+            is_termination_msg=is_termination_msg,
+            human_input_mode=human_input_mode,
+            max_consecutive_auto_reply=max_consecutive_auto_reply,
+            code_execution_config=code_execution_config,
+            **kwargs
+        )
+
+    def chat(self, message: str, use_cache=False, **kwargs):
+        self.user_proxy.initiate_chat(
+            self.assistant,
+            message=message,
+            **kwargs
+        )
+
+    def reset(self):
+        self.user_proxy.reset()
+        self.assistant.reset()
 
 from functions.aggregator.aggregator import fetch_aggregate_all_news
 
@@ -188,18 +230,22 @@ print(f"\nProcessing {len(df_news_limited)} articles individually...")
 for idx, row in df_news_limited.iterrows():
 
     title = row.get('title', 'No Title')
-
-    summary = row.get('summary', 'No Summary')
-
     source = row.get('source', 'Unknown Source')
-
     date = str(row.get('date', 'Unknown Date'))
+    summary = row.get('summary', '')
+    text = row.get('text', '')
 
-    
+    is_summary_missing = not summary or pd.isna(summary) or not isinstance(summary, str) or len(summary.strip()) < 5
+    is_text_missing = not text or pd.isna(text) or not isinstance(text, str) or len(text.strip()) < 5
+
+    if is_summary_missing:
+        if not is_text_missing:
+            summary = f"{title}\n\n{text}"
+        else:
+            summary = title
 
     # Handle insufficient data/missing summary
-
-    if not summary or pd.isna(summary) or len(summary.strip()) < 5:
+    if not summary or pd.isna(summary) or not isinstance(summary, str) or len(summary.strip()) < 5:
 
         scored_article = {
 
