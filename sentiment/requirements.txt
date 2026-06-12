@@ -13,3 +13,7 @@ langchain-community
 langchain-nvidia-ai-endpoints
 faiss-cpu
 pyautogen<0.3.0
+finnhub-python
+sec_api
+finrobot
+praw

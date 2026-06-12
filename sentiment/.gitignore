@@ -7,3 +7,5 @@ __pycache__/
 .ruff_cache/
 data/news_*.csv
 data/news_*.json
+test_sentiment.py
+data/

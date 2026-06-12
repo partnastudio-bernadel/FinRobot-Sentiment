@@ -33,6 +33,9 @@ This repository combines a multi-provider financial news aggregator with a LangC
    NVIDIA_API_ENDPOINT = "https://integrate.api.nvidia.com/v1"
    NVIDIA_API_KEY = "your-nvidia-key"
    ```
+   > [!NOTE]
+   > The fine-tuned model `curiousily/Llama-3-8B-Instruct-Finance-RAG:fastest` has been verified to work with the serverless **Featherless** provider hosted on Hugging Face using the Router endpoint.
+
 2. Set up your Python environment using the local `venv`:
    ```bash
    # Activate virtual env and install requirements

@@ -30,6 +30,8 @@ ENV/
 env.bak/
 venv.bak/
 sentiment/.env.local
+sentiment/.env
+sentiment/test_sentiment.py
 # Database files
 *.db
 *.sqlite
