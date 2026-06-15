@@ -50,7 +50,7 @@ package-lock.json
 dist/
 dist-ssr/
 *.local
-
+.cache
 # IDEs
 .vscode/
 .idea/
@@ -63,7 +63,7 @@ dist-ssr/
 .coverage
 .pytest_cache/
 htmlcov/
-
+result code plot/
 # Build artifacts
 *.wasm
 *.o
