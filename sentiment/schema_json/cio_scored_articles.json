@@ -1,0 +1,28 @@
+[
+    {
+        "title": "Apple Q3 earnings exceed street expectation",
+        "source": "Bloomberg",
+        "published_at": "2026-06-15T10:00:00Z",
+        "sentiment_label": "Positive",
+        "sentiment_score": 0.80,
+        "confidence": 0.90,
+        "risk_factors": [],
+        "reasoning_summary": "Strong revenue beat driven by iPhone sales and services growth.",
+        "flagged": false,
+        "flag_reason": null
+    },
+    {
+        "title": "US DOJ intensifies antitrust case against Apple",
+        "source": "Reuters",
+        "published_at": "2026-06-15T12:00:00Z",
+        "sentiment_label": "Negative",
+        "sentiment_score": -0.60,
+        "confidence": 0.85,
+        "risk_factors": [
+            "regulatory_headwind"
+        ],
+        "reasoning_summary": "Potential antitrust penalties and market restriction concerns.",
+        "flagged": false,
+        "flag_reason": null
+    }
+]

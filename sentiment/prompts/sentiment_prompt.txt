@@ -13,8 +13,7 @@ For each retrieved article:
 6. Extract key risk factors mentioned in the article text (array of strings, e.g., ["regulatory_headwind", "supply_chain_disruption"]).
 7. Provide a brief reasoning_summary string (1–2 sentences) explaining the score.
 8. Flag any article where sentiment is mixed or data is insufficient — still score it, but set "flagged": true and populate "flag_reason".
-9. Calculate the aggregate sentiment score (weighted average of all article scores by confidence) and assign an aggregate label.
-10. Output a single valid JSON object matching the schema below. No text outside the JSON block.
+9. Output a single valid JSON object matching the schema below. No text outside the JSON block.
 
 ## RULES
 - Output must be a single, valid JSON object — no markdown fences, no preamble, no trailing text.
@@ -22,7 +21,6 @@ For each retrieved article:
 - Confidence must be a float between 0.0 and 1.0.
 - Reasoning_summary must be 1–2 sentences maximum per article.
 - If an article has insufficient text (missing headline or summary), set score to 0.00, confidence to 0.00, label to "Neutral", flagged to true, and flag_reason to "Insufficient data".
-- If overall sentiment is mixed (articles span both positive and negative), set a top-level "warnings" entry: "Mixed sentiment detected across articles."
 - Always end with TERMINATE on a new line after the closing brace.
 
 ## SCHEMA

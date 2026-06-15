@@ -1,0 +1,23 @@
+{
+    "ticker": "string",
+    "metadata": {
+        "timestamp": "ISO 8601 UTC string",
+        "article_count": "integer"
+    },
+    "articles": [
+        {
+            "title": "string",
+            "source": "string",
+            "published_at": "ISO 8601 string or null",
+            "sentiment_label": "Positive | Neutral | Negative",
+            "sentiment_score": "float",
+            "confidence": "float",
+            "risk_factors": [
+                "string"
+            ],
+            "reasoning_summary": "string",
+            "flagged": "boolean",
+            "flag_reason": "string or null"
+        }
+    ]
+}
