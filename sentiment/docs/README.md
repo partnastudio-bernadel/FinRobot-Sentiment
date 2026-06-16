@@ -39,15 +39,15 @@ sentiment/
 
 We transitioned from a rigid, monolithic notebook pipeline into a highly modular, decoupled, and agentic delegation architecture. You can follow this evolutionary path via these tutorials:
 
-### 1. [llama3_aapl_news.ipynb](file:///d:/PartnaStudio/sentinel/stack/FinRobot-IntentChain/sentiment/tutorials/llama3_aapl_news.ipynb) — Monolithic Baseline
+### 1. [llama3_aapl_news.ipynb](file:///d:/PartnaStudio/sentinel/stack/FinRobot-IntentChain/sentiment/tutorials/llama3_aapl_news.ipynb) — Monolithic Baseline (Tested ✅)
 * **Purpose**: Fetches, cleans, and scores AAPL news articles inline.
 * **Limitations**: Highly redundant inline cells, manual regex response sanitization, hardcoded FAISS database setup, and lack of separation between concerns.
 
-### 2. [llama3_news.ipynb](file:///d:/PartnaStudio/sentinel/stack/FinRobot-IntentChain/sentiment/tutorials/llama3_news.ipynb) — Modular Refactoring
+### 2. [llama3_news.ipynb](file:///d:/PartnaStudio/sentinel/stack/FinRobot-IntentChain/sentiment/tutorials/llama3_news.ipynb) — Modular Refactoring (Tested ✅)
 * **Purpose**: Decouples the core pipeline functions from execution notebooks.
 * **Key Enhancements**: Moving standard tasks to helper files (e.g. LLM configuration generators, custom scrapers, database loaders) and wrapping them in standard agent factory creation methods.
 
-### 3. [llama3_news_delegation.ipynb](file:///d:/PartnaStudio/sentinel/stack/FinRobot-IntentChain/sentiment/tutorials/llama3_news_delegation.ipynb) — Agent-to-Agent Nested Chat
+### 3. [llama3_news_delegation.ipynb](file:///d:/PartnaStudio/sentinel/stack/FinRobot-IntentChain/sentiment/tutorials/llama3_news_delegation.ipynb) — Agent-to-Agent Nested Chat (Still Testing ⚠️)
 * **Purpose**: Sets up AutoGen-based multi-agent coordination.
 * **Key Enhancements**: Instead of orchestrating step-by-step code execution in Python, the pipeline configures a direct delegation chat structure where a User Proxy chats with a **Senior Sentiment Analyst (CIO) Agent**, which automatically triggers a **Sentiment Scorer Agent** via an AutoGen **Nested Chat**.
 
