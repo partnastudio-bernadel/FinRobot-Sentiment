@@ -11,6 +11,8 @@ sentiment/
 ├── data/                    # Raw and cached sentiment datasets
 ├── docs/                    # Architectural guides and roadmaps (including this README.md)
 │   ├── NEXT_STEPS.md
+│   ├── docstring_standard.md
+│   ├── macro_ingestion_architecture.md
 │   ├── news_providers.md
 │   └── sentiment_analyzer_architecture.md
 ├── functions/               # Core codebase functions (scrapers, API providers, formulas, agents)
@@ -23,6 +25,7 @@ sentiment/
 └── tutorials/               # Step-by-step evolution notebook guides
 ```
 
+
 ---
 
 ## 📄 Architectural Guides & Documentation
@@ -32,6 +35,10 @@ sentiment/
 | [sentiment_analyzer_architecture.md](file:///d:/PartnaStudio/sentinel/stack/FinRobot-IntentChain/sentiment/docs/sentiment_analyzer_architecture.md) | **Core System Design**: Explains the 3-layer system layout, 2-agent sequential sequence flow, mathematical scoring equations, app and IntentCore database schemas, vector caching, and websocket payload contracts. |
 | [news_providers.md](file:///d:/PartnaStudio/sentinel/stack/FinRobot-IntentChain/sentiment/docs/news_providers.md) | **API & Scraping Status**: Outlines support details for OpenBB platform news connectors, status matrix of the 11 integrated providers, and headless browser scraping results across major news domains. |
 | [NEXT_STEPS.md](file:///d:/PartnaStudio/sentinel/stack/FinRobot-IntentChain/sentiment/docs/NEXT_STEPS.md) | **Development Roadmap**: Details current progress on mathematical formulas, macro data ingestion framework, dual-source inputs (ForexFactory + Alpha Vantage), and future RL portfolio rebalancing milestones. |
+| [docstring_standard.md](file:///d:/PartnaStudio/sentinel/stack/FinRobot-IntentChain/sentiment/docs/docstring_standard.md) | **Docstring Standard Guidelines**: Establishes strict rules for all Python functions and tools used by FinRobot agents, enforcing selection criteria, type hints, and error payloads. |
+| [macro_ingestion_architecture.md](file:///d:/PartnaStudio/sentinel/stack/FinRobot-IntentChain/sentiment/docs/macro_ingestion_architecture.md) | **Macro Ingestion Design**: Outlines the mathematical formulas, multi-agent delegation interactions, output data contracts, and fallback guardrails for economic surprise index calculation. |
+
+
 
 ---
 
@@ -47,9 +54,25 @@ We transitioned from a rigid, monolithic notebook pipeline into a highly modular
 * **Purpose**: Decouples the core pipeline functions from execution notebooks.
 * **Key Enhancements**: Moving standard tasks to helper files (e.g. LLM configuration generators, custom scrapers, database loaders) and wrapping them in standard agent factory creation methods.
 
-### 3. [llama3_news_delegation.ipynb](file:///d:/PartnaStudio/sentinel/stack/FinRobot-IntentChain/sentiment/tutorials/llama3_news_delegation.ipynb) — Agent-to-Agent Nested Chat (Still Testing ⚠️)
-* **Purpose**: Sets up AutoGen-based multi-agent coordination.
-* **Key Enhancements**: Instead of orchestrating step-by-step code execution in Python, the pipeline configures a direct delegation chat structure where a User Proxy chats with a **Senior Sentiment Analyst (CIO) Agent**, which automatically triggers a **Sentiment Scorer Agent** via an AutoGen **Nested Chat**.
+### 3. [llama3_news_delegation.ipynb](file:///d:/PartnaStudio/sentinel/stack/FinRobot-IntentChain/sentiment/tutorials/llama3_news_delegation.ipynb) — Agent-to-Agent Nested Chat (Tested ✅)
+* **Purpose**: Sets up AutoGen-based multi-agent coordination with transparent chunk batching.
+* **Key Enhancements**: Instead of orchestrating step-by-step code execution in Python, the pipeline configures a direct delegation chat structure where a User Proxy chats with a **Senior Sentiment Analyst (CIO) Agent**, which automatically delegates to a **Sentiment Scorer Agent** in batches of 5 to avoid LLM output truncation.
+
+### 4. [macro_ingestion_delegation.ipynb](file:///d:/PartnaStudio/sentinel/stack/FinRobot-IntentChain/sentiment/tutorials/macro_ingestion_delegation.ipynb) — Macro Ingestion & Multi-Agent Calculation (Still Testing ⚠️)
+* **Purpose**: Simulates the ingestion of macro indicators (e.g. CPI MoM) using Model Context Protocol (MCP) clients and calculates the standardized surprise score.
+* **Key Enhancements**: Connects to the local ForexFactory stdio server and remote Alpha Vantage SSE server using Python MCP SDK Client Sessions. Configures a direct delegation chain where the **Chief Macro Economist (Macro CIO)** initiates sub-chats with specialized scraper and baseline computation agents.
+
+---
+
+## 💻 CLI Scripts & Utilities
+
+### 1. [news_sentiment_cli.py](file:///d:/PartnaStudio/sentinel/stack/FinRobot-IntentChain/sentiment/scripts/news_sentiment_cli.py)
+* **Purpose**: A command-line utility for executing the two-agent sentiment analysis pipeline directly from the console.
+* **Usage**:
+  ```bash
+  python sentiment/scripts/news_sentiment_cli.py --ticker MSFT --limit 10
+  ```
+
 
 ---
 
@@ -138,7 +161,8 @@ Located in `sentiment/functions/tools/`:
   * **Description**: Configures and returns the `Senior Sentiment Analyst (CIO) Agent` which aggregates results and formats the final report.
 * **[custom_nested_chat_reply](file:///d:/PartnaStudio/sentinel/stack/FinRobot-IntentChain/sentiment/functions/tools/custom_reply.py#L3)**
   * **Signature**: `custom_nested_chat_reply(chat_queue, recipient, messages, sender, config)`
-  * **Description**: Custom registration callback that handles standard AutoGen agent-to-agent delegation messaging.
+  * **Description**: Custom registration callback that handles standard AutoGen agent-to-agent delegation messaging with built-in transparent batching (cycles of 5 articles) to prevent token limit truncation.
+
 * **[prepare_articles](file:///d:/PartnaStudio/sentinel/stack/FinRobot-IntentChain/sentiment/functions/tools/prepare_articles.py#L3)**
   * **Signature**: `prepare_articles(df_news, db, limit=5, k_examples=2)`
   * **Description**: Filters raw news articles, retrieves semantic neighbors from the FAISS database, and returns standard prompt-ready structures.
@@ -152,6 +176,10 @@ The agent workflows enforce strict input/output formats through files located in
 ### 💬 System Prompts
 * **[sentiment_prompt.txt](file:///d:/PartnaStudio/sentinel/stack/FinRobot-IntentChain/sentiment/prompts/sentiment_prompt.txt)**: Instructions for the Sentiment Scorer agent detailing how to score articles against target schema contracts.
 * **[cio_prompt.txt](file:///d:/PartnaStudio/sentinel/stack/FinRobot-IntentChain/sentiment/prompts/cio_prompt.txt)**: Instructions for the CIO agent detailing how to compile and validate the weighted average sentiment scores.
+* **[chief_macro_economist_prompt.txt](file:///d:/PartnaStudio/sentinel/stack/FinRobot-IntentChain/sentiment/prompts/chief_macro_economist_prompt.txt)**: Instructions for the Chief Macro Economist coordinating agent.
+* **[forexfactory_scraper_prompt.txt](file:///d:/PartnaStudio/sentinel/stack/FinRobot-IntentChain/sentiment/prompts/forexfactory_scraper_prompt.txt)**: Prompt directing the ForexFactory Scraper agent on how to call the calendar tool.
+* **[alphavantage_agent_prompt.txt](file:///d:/PartnaStudio/sentinel/stack/FinRobot-IntentChain/sentiment/prompts/alphavantage_agent_prompt.txt)**: Instructions for the Alpha Vantage Agent to compute standard deviations of macro indicator history.
+
 
 ### 📐 JSON Output Schemas
 * **[sentiment_schema.json](file:///d:/PartnaStudio/sentinel/stack/FinRobot-IntentChain/sentiment/schema_json/sentiment_schema.json)**: Schema mapping individual article scoring outputs.

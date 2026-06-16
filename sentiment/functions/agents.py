@@ -1,5 +1,5 @@
 from finrobot.agents.workflow import FinRobot
-from sentiment.functions.utils.read_and_clean import read_file_content
+from .utils.read_and_clean import read_file_content
 
 def create_scorer_agent(prompt_path, schema_path, llm_config):
     """Instantiates and returns the Sentiment Scorer agent."""
