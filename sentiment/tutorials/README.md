@@ -6,18 +6,18 @@ This directory documents the evolutionary path of our financial sentiment analys
 
 ## 📂 Evolution of files
 
-### 1. [llama3_aapl_news.ipynb](file:///d:/PartnaStudio/sentinel/stack/FinRobot-IntentChain/tutorials_sentiment/llama3_aapl_news.ipynb) (Original)
+### 1. [llama3_aapl_news.ipynb](file:///d:/PartnaStudio/sentinel/stack/FinRobot-IntentChain/sentiment/tutorials/llama3_aapl_news.ipynb) (Original)
 The baseline implementation. It fetches, sanitizes, and scores articles inline.
 * **Drawbacks**: Contains large redundant inline code blocks, duplicate file reading (for prompts and schemas), manual string-cleaning logic for agent outputs, and hardcoded RAG/embedding queries.
 
-### 2. [llama3_news.ipynb](file:///d:/PartnaStudio/sentinel/stack/FinRobot-IntentChain/tutorials_sentiment/llama3_news.ipynb) (Modular Refactoring)
+### 2. [llama3_news.ipynb](file:///d:/PartnaStudio/sentinel/stack/FinRobot-IntentChain/sentiment/tutorials/llama3_news.ipynb) (Modular Refactoring)
 The first refactoring milestone. It decouples the core logic from execution cells into neat helper functions.
 * **Improvements**:
   * Moved low-level tasks into helper modules (e.g., standardizing LLM configuration generation, response parsing, vector store building).
   * Introduced standard Agent Factory patterns (`create_scorer_agent` and `create_cio_agent`).
   * Packaged the data fetching, text sanitization, and FAISS vector retrieval loop into a robust `prepare_articles` function.
 
-### 3. [llama3_news_delegation.ipynb](file:///d:/PartnaStudio/sentinel/stack/FinRobot-IntentChain/tutorials_sentiment/llama3_news_delegation.ipynb) (Agent-to-Agent Delegation)
+### 3. [llama3_news_delegation.ipynb](file:///d:/PartnaStudio/sentinel/stack/FinRobot-IntentChain/sentiment/tutorials/llama3_news_delegation.ipynb) (Agent-to-Agent Delegation)
 The final milestone. Instead of orchestrating step-by-step sequential calls in Python orchestrator functions, we configure a direct delegation pattern where the User Proxy sends raw data directly to the **Senior Sentiment Analyst (CIO) Agent**, which automatically delegates the scoring task to the **Sentiment Scorer Agent** via an AutoGen **Nested Chat**.
 * **Improvements**:
   * Employs standard AutoGen `register_nested_chats` framework to handle sub-agent division of labor.
