@@ -64,6 +64,7 @@ dist-ssr/
 .pytest_cache/
 htmlcov/
 result code plot/
+sentiment\tutorials\macro_ingestion_delegation.py
 # Build artifacts
 *.wasm
 *.o

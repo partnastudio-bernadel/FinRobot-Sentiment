@@ -1,0 +1,17 @@
+{
+  "event_name": "CPI MoM",
+  "category": "Inflation",
+  "timestamp": "2023-03-16",
+  "data": {
+    "actual": 0.4,
+    "consensus": 0.3,
+    "difference": 0.1,
+    "historical_std": 0.15,
+    "impact_tier": "High"
+  },
+  "metrics": {
+    "macro_surprise_score": 2.67,
+    "warning_flag": false
+  },
+  "reasoning_summary": "The CPI MoM event had a high impact tier and a macro surprise score of 2.67, indicating a significant positive surprise."
+}

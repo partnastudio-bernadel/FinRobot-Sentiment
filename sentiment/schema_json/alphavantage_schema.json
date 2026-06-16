@@ -1,0 +1,4 @@
+{
+  "indicator": "string",
+  "historical_std": "float"
+}

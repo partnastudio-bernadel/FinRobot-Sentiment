@@ -9,3 +9,4 @@ data/news_*.csv
 data/news_*.json
 test_sentiment.py
 data/
+sentiment\tutorials\macro_ingestion_delegation.py

@@ -1,0 +1,11 @@
+[
+  {
+    "Date": "string",
+    "Event": "string",
+    "Actual": "float or null",
+    "Forecast": "float or null",
+    "Previous": "float or null",
+    "Impact": "string",
+    "Currency": "string"
+  }
+]

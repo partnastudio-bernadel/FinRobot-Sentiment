@@ -1,0 +1,17 @@
+{
+  "event_name": "string",
+  "category": "string",
+  "timestamp": "string",
+  "data": {
+    "actual": "float",
+    "consensus": "float",
+    "difference": "float",
+    "historical_std": "float",
+    "impact_tier": "string"
+  },
+  "metrics": {
+    "macro_surprise_score": "float",
+    "warning_flag": "boolean"
+  },
+  "reasoning_summary": "string"
+}

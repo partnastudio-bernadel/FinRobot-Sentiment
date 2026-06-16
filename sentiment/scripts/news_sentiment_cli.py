@@ -71,18 +71,11 @@ def run_sentiment_analysis(
     load_dotenv(env_path)
     
     nvidia_embedding_model = os.getenv("NVIDIA_EMBEDDING_MODEL", "nvidia/nv-embed-v1").strip('"\' ')
-    nvidia_base_model = os.getenv("NVIDIA_BASE_MODEL", "").strip('"\' ')
-    nvidia_api_endpoint = os.getenv("NVIDIA_API_ENDPOINT", "https://integrate.api.nvidia.com/v1").strip('"\' ')
     nvidia_api_key = os.getenv("NVIDIA_API_KEY", "").strip('"\' ')
-    
-    hf_api_key = os.getenv("HUGGINGFACE_API_KEY", "").strip('"\' ')
-    hf_model_name = os.getenv("HUGGINGFACE_MODEL_NAME_FEATHERLESS", "curiousily/Llama-3-8B-Instruct-Finance-RAG").strip('"\' ')
-    hf_base_url = os.getenv("HUGGINGFACE_BASE_URL", "https://router.huggingface.co/v1").strip('"\' ')
+    nvidia_api_endpoint = os.getenv("NVIDIA_API_ENDPOINT", "https://integrate.api.nvidia.com/v1").strip('"\' ')
     
     if not nvidia_api_key:
         raise ValueError("NVIDIA_API_KEY is not set in the environment configuration.")
-    if not hf_api_key:
-        raise ValueError("HUGGINGFACE_API_KEY is not set in the environment configuration.")
 
     # 3. Setup embeddings & LLM configurations
     embeddings = NVIDIAEmbeddings(
@@ -91,11 +84,27 @@ def run_sentiment_analysis(
         base_url=nvidia_api_endpoint
     )
     
-    config_list = generate_config(hf_model_name, hf_base_url, hf_api_key)
-    base_config_list = generate_config(nvidia_base_model, nvidia_api_endpoint, nvidia_api_key)
-    
-    llm_config = {"config_list": config_list, "model": hf_model_name}
-    base_llm_config = {"config_list": base_config_list, "model": nvidia_base_model}
+    # If using the default env_path, load from central functions package
+    default_env_local = os.path.join(sentiment_dir, ".env.local")
+    default_env = os.path.join(sentiment_dir, ".env")
+    if env_path in (default_env_local, default_env):
+        from functions import llm_config, base_llm_config
+    else:
+        # Re-generate configs based on the custom env file loaded above
+        nvidia_base_model = os.getenv("NVIDIA_BASE_MODEL", "").strip('"\' ')
+        hf_api_key = os.getenv("HUGGINGFACE_API_KEY", "").strip('"\' ')
+        hf_model_name = os.getenv("HUGGINGFACE_MODEL_NAME_FEATHERLESS", "curiousily/Llama-3-8B-Instruct-Finance-RAG").strip('"\' ')
+        hf_base_url = os.getenv("HUGGINGFACE_BASE_URL", "https://router.huggingface.co/v1").strip('"\' ')
+        
+        if not hf_api_key:
+            raise ValueError("HUGGINGFACE_API_KEY is not set in the environment configuration.")
+            
+        config_list = generate_config(hf_model_name, hf_base_url, hf_api_key)
+        base_config_list = generate_config(nvidia_base_model, nvidia_api_endpoint, nvidia_api_key)
+        
+        llm_config = {"config_list": config_list, "model": hf_model_name}
+        base_llm_config = {"config_list": base_config_list, "model": nvidia_base_model}
+
 
     # 4. Build vector store for calibration examples
     db = build_vector_store(csv_path, embeddings, limit_rows=300)
