@@ -58,9 +58,12 @@ We transitioned from a rigid, monolithic notebook pipeline into a highly modular
 * **Purpose**: Sets up AutoGen-based multi-agent coordination with transparent chunk batching.
 * **Key Enhancements**: Instead of orchestrating step-by-step code execution in Python, the pipeline configures a direct delegation chat structure where a User Proxy chats with a **Senior Sentiment Analyst (CIO) Agent**, which automatically delegates to a **Sentiment Scorer Agent** in batches of 5 to avoid LLM output truncation.
 
-### 4. [macro_ingestion_delegation.ipynb](file:///d:/PartnaStudio/sentinel/stack/FinRobot-IntentChain/sentiment/tutorials/macro_ingestion_delegation.ipynb) — Macro Ingestion & Multi-Agent Calculation (Still Testing ⚠️)
-* **Purpose**: Simulates the ingestion of macro indicators (e.g. CPI MoM) using Model Context Protocol (MCP) clients and calculates the standardized surprise score.
-* **Key Enhancements**: Connects to the local ForexFactory stdio server and remote Alpha Vantage SSE server using Python MCP SDK Client Sessions. Configures a direct delegation chain where the **Chief Macro Economist (Macro CIO)** initiates sub-chats with specialized scraper and baseline computation agents.
+### 4. [macro_ingestion_delegation.ipynb](file:///d:/PartnaStudio/sentinel/stack/FinRobot-IntentChain/sentiment/tutorials/macro_ingestion_delegation.ipynb) — Macro Ingestion & Multi-Agent Calculation (Tested & Stable ✅)
+* **Purpose**: Simulates the ingestion of macro indicators (e.g. CPI m/m) using Model Context Protocol (MCP) clients and calculates the standardized surprise score.
+* **Key Enhancements**: Connects to the local ForexFactory stdio server and remote Alpha Vantage HTTP client using Python MCP SDK Client Sessions. Configures a direct delegation chain where the **Chief Macro Economist (Macro CIO)** initiates sub-chats with scraper and baseline computation agents.
+* **Current State**: Fully verified. We successfully resolved Playwright cold-start browser timeouts, JSON type coercion bugs on sliding windows, Alpha Vantage remote rate limit safety defaults, and AutoGen nested chat reply-swallowing (using a custom handler with reverse history parsing and `sender.send` routing). The pipeline now processes real USD CPI releases and historical standard deviations to output strict JSON reports.
+* **Under Development**: Exposing ingestion FastAPI endpoints (`POST /v1/ingest/macro-calendar`), integrating Redis TTL caching, setting up the AppDB storage layer (SQLite tables for leaderboard and velocity metrics), and implementing the gymnasium environment for the **FinRL-X Portfolio Rebalancing Suggester** (RL weight optimization).
+
 
 ---
 

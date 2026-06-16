@@ -56,7 +56,12 @@ async def async_query_alpha_vantage_mcp(tool_name: str, arguments: dict, api_key
                 
                 result = await session.call_tool(mcp_tool, wrapped_arguments)
                 if isinstance(result.content, list) and len(result.content) > 0:
-                    return json.loads(result.content[0].text)
+                    first_text = result.content[0].text
+                    if first_text.strip().startswith("["):
+                        return json.loads(first_text)
+                    if len(result.content) == 1:
+                        return json.loads(first_text)
+                    return [json.loads(content.text) for content in result.content if content.text]
                 return {"status": "error", "error_msg": "Empty tool response"}
     except Exception as e:
         return {"status": "error", "error_msg": f"MCP Connection failed: {str(e)}"}
@@ -82,7 +87,12 @@ async def async_query_forexfactory_mcp(tool_name: str, arguments: dict) -> dict:
                 await session.initialize()
                 result = await session.call_tool(tool_name, arguments)
                 if isinstance(result.content, list) and len(result.content) > 0:
-                    return json.loads(result.content[0].text)
+                    first_text = result.content[0].text
+                    if first_text.strip().startswith("["):
+                        return json.loads(first_text)
+                    if len(result.content) == 1:
+                        return json.loads(first_text)
+                    return [json.loads(content.text) for content in result.content if content.text]
                 return {"status": "error", "error_msg": "Empty tool response"}
     except Exception as e:
         return {"status": "error", "error_msg": f"Local stdio server launch failed: {str(e)}"}
