@@ -10,24 +10,24 @@ The active system runs inside standard Python/Jupyter execution environments, ut
 
 ```mermaid
 graph TD
-    subgraph Data Layer
-        Feeds[News Channels: YFinance, alpha-vantage, etc.] --> Aggregator[Multi-Provider Ingestion]
+    subgraph "Data Layer"
+        Feeds[News Channels: YFinance, alpha-vantage, etc.] --> Ingestion[Multi-Provider Ingestion]
         PhraseBank[financial_sentiment.csv] --> FAISS[FAISS Vector Store]
     end
 
-    subgraph Orchestration Layer (AutoGen + FinRobot)
+    subgraph "Orchestration Layer (AutoGen + FinRobot)"
         Orch[Jupyter Notebook / Python Orchestrator]
         Scorer[Sentiment Scorer Agent]
         CIO[Senior Analyst / CIO Agent]
         
-        Aggregator --> |Raw Articles| Orch
+        Ingestion --> |Articles| Orch
         FAISS --> |Few-Shot Calibration Anchors| Orch
         Orch --> |Format input| Scorer
         Scorer --> |Individual JSON scores| CIO
         CIO --> |Consolidated JSON Report| Orch
     end
 
-    subgraph Analytical Utilities
+    subgraph "Analytical Utilities"
         Orch -.-> |Tested Calculations| Formulas[Formulas Library: formulas.py]
     end
 ```
@@ -57,11 +57,11 @@ The collaborative multi-agent execution follows a structured, step-by-step pipel
 ```mermaid
 sequenceDiagram
     autonumber
-    actor Dev as User / Notebook Execution
-    participant Agg as Ingestion Aggregator
-    participant FAISS as FAISS Vector Store
-    participant Scorer as Sentiment Scorer Agent
-    participant CIO as Senior Sentiment Analyst Agent
+    actor Dev as "User / Notebook Execution"
+    participant Agg as "Ingestion Aggregator"
+    participant FAISS as "FAISS Vector Store"
+    participant Scorer as "Sentiment Scorer Agent"
+    participant CIO as "Senior Sentiment Analyst Agent"
 
     Dev->>Agg: fetch_aggregate_all_news(ticker, limit)
     Agg-->>Dev: DataFrame of standard article dicts
