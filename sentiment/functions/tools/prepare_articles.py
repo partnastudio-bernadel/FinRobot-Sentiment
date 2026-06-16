@@ -86,34 +86,5 @@ def prepare_articles(df_news, db, limit=5, k_examples=2):
             "calibration_examples": calibration_examples
         })
         
-    return articles_to_analyze
 
-db_instance = None
-
-def set_db_instance(db):
-    global db_instance
-    db_instance = db
-
-def prepare_articles_tool(ticker: str, limit: int = 5) -> str:
-    """Fetch recent news articles for a ticker and format them with semantic calibration examples.
-
-    Args:
-        ticker: The stock ticker symbol to analyze (e.g., 'AAPL').
-        limit: The number of recent articles to score. Defaults to 5.
-
-    Returns:
-        A JSON string containing the list of formatted articles with calibration examples.
-    """
-    import json
-    from sentiment.functions.aggregator.aggregator import fetch_aggregate_all_news
-    
-    if db_instance is None:
-        raise ValueError("Database instance (db_instance) is not initialized. Please call set_db_instance(db) first.")
-        
-    df_news = fetch_aggregate_all_news(symbol=ticker, limit=100)
-    
-    if df_news.empty:
-        raise ValueError(f"No news articles found for symbol {ticker}.")
-        
-    articles = prepare_articles(df_news, db_instance, limit=limit)
-    return json.dumps(articles, indent=2)
+    return articles_to_analyze

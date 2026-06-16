@@ -17,13 +17,12 @@ The first refactoring milestone. It decouples the core logic from execution cell
   * Introduced standard Agent Factory patterns (`create_scorer_agent` and `create_cio_agent`).
   * Packaged the data fetching, text sanitization, and FAISS vector retrieval loop into a robust `prepare_articles` function.
 
-### 3. [llama3_news_with_tools.ipynb](file:///d:/PartnaStudio/sentinel/stack/FinRobot-IntentChain/tutorials_sentiment/llama3_news_with_tools.ipynb) (Agentic Tool Calling)
-The final milestone. Instead of orchestrating data fetching and FAISS context search in local python cells, we turned this logic into a tool and gave it directly to the agent.
+### 3. [llama3_news_delegation.ipynb](file:///d:/PartnaStudio/sentinel/stack/FinRobot-IntentChain/tutorials_sentiment/llama3_news_delegation.ipynb) (Agent-to-Agent Delegation)
+The final milestone. Instead of orchestrating step-by-step sequential calls in Python orchestrator functions, we configure a direct delegation pattern where the User Proxy sends raw data directly to the **Senior Sentiment Analyst (CIO) Agent**, which automatically delegates the scoring task to the **Sentiment Scorer Agent** via an AutoGen **Nested Chat**.
 * **Improvements**:
-  * Extracted the article preparation flow into a unified agentic tool: `prepare_articles_tool` (located in [prepare_articles.py](file:///d:/PartnaStudio/sentinel/stack/FinRobot-IntentChain/sentiment/functions/tools/prepare_articles.py)).
-  * The **Sentiment Scorer Agent** is now fully autonomous: it is registered with this tool and uses it to dynamically fetch current news and calibration examples on-demand.
-  * Replaced the pipeline function with explicit, separate execution blocks in the notebook for easier debugging and step-by-step model testing.
-  * Allows the user to dynamically customize parameters (e.g. news count limit, stock ticker) at execution time inside the chat prompt rather than hardcoding them in system settings.
+  * Employs standard AutoGen `register_nested_chats` framework to handle sub-agent division of labor.
+  * Allows the CIO agent to automatically delegate context comprehension tasks to the Scorer agent.
+  * Preserves clean pipeline boundaries without requiring complex LLM tool-calling capabilities.
 
 ---
 
@@ -35,6 +34,10 @@ To support this evolution, the workspace files under `sentiment/` were expanded 
   * [read_and_clean.py](file:///d:/PartnaStudio/sentinel/stack/FinRobot-IntentChain/sentiment/functions/utils/read_and_clean.py): System file IO readers and markdown/termination stripping utilities.
   * [build.py](file:///d:/PartnaStudio/sentinel/stack/FinRobot-IntentChain/sentiment/functions/utils/build.py): FAISS database loading and embedding indexing.
 * **`sentiment/functions/tools/`**:
-  * [prepare_articles.py](file:///d:/PartnaStudio/sentinel/stack/FinRobot-IntentChain/sentiment/functions/tools/prepare_articles.py): Contains the core `prepare_articles` function and `prepare_articles_tool` wrapper.
+  * [prepare_articles.py](file:///d:/PartnaStudio/sentinel/stack/FinRobot-IntentChain/sentiment/functions/tools/prepare_articles.py): Contains the core `prepare_articles` function.
+  * [agents.py](file:///d:/PartnaStudio/sentinel/stack/FinRobot-IntentChain/sentiment/functions/tools/agents.py): Shared factory creators for Scorer and CIO agents.
+  * [custom_reply.py](file:///d:/PartnaStudio/sentinel/stack/FinRobot-IntentChain/sentiment/functions/tools/custom_reply.py): Custom reply function for AutoGen nested chats to enable downstream LLM execution.
 * **`sentiment/prompts/`**:
-  * [sentiment_prompt_with_tools.txt](file:///d:/PartnaStudio/sentinel/stack/FinRobot-IntentChain/sentiment/prompts/sentiment_prompt_with_tools.txt): The system prompt instructing the Sentiment Scorer agent on how and when to invoke the tool calling loop.
+  * [sentiment_prompt.txt](file:///d:/PartnaStudio/sentinel/stack/FinRobot-IntentChain/sentiment/prompts/sentiment_prompt.txt): The system prompt instructing the Sentiment Scorer agent on how to score input articles against target schema contracts.
+
+
