@@ -11,6 +11,11 @@ def custom_nested_chat_reply(chat_queue, recipient, messages, sender, config):
        replying to the user, allowing the CIO Agent to run its own LLM 
        consolidator logic on the scoring summary.
     """
+    # Guard: prevent scoring triggered with empty/blank articles input
+    last_msg = messages[-1].get("content", "").strip() if messages else ""
+    if not last_msg or last_msg == "[]":
+        return True, "No articles provided to score. TERMINATE"
+
     chats_to_run = recipient._get_chats_to_run(chat_queue, recipient, messages, sender, config)
     if not chats_to_run:
         return True, None

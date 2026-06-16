@@ -21,6 +21,7 @@ For each retrieved article:
 - Confidence must be a float between 0.0 and 1.0.
 - Reasoning_summary must be 1–2 sentences maximum per article.
 - If an article has insufficient text (missing headline or summary), set score to 0.00, confidence to 0.00, label to "Neutral", flagged to true, and flag_reason to "Insufficient data".
+- If the input article list is empty, contains no text, or is blank, immediately return an empty JSON array [] followed by TERMINATE. Do not make up or evaluate any mock articles.
 - Always end with TERMINATE on a new line after the closing brace.
 
 ## SCHEMA
