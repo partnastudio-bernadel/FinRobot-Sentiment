@@ -5,15 +5,44 @@ def read_file_content(file_path):
 
 def extract_and_clean_response(user_proxy, agent, is_json=False):
     """Extracts the last message from an agent, strips TERMINATE, and cleans markdown JSON wraps."""
-    msg = user_proxy.last_message(agent).get("content", "")
-    if msg.endswith("TERMINATE"):
-        msg = msg[:-9].strip()
+    msg = ""
+    
+    if is_json:
+        # Search backward for the most recent message that contains a JSON object
+        chat_history = user_proxy.chat_messages.get(agent, [])
+        for message in reversed(chat_history):
+            content = message.get("content", "")
+            if isinstance(content, str) and "{" in content and "}" in content:
+                msg = content
+                break
+        else:
+            # Fallback to last message if no message containing braces is found
+            last_msg_dict = user_proxy.last_message(agent)
+            if last_msg_dict:
+                msg = last_msg_dict.get("content", "") or ""
+    else:
+        last_msg_dict = user_proxy.last_message(agent)
+        if last_msg_dict:
+            msg = last_msg_dict.get("content", "") or ""
+
+    if isinstance(msg, str):
+        import re
+        # Strip TERMINATE from beginning, end, or surrounded by whitespace
+        msg = re.sub(r'^\s*TERMINATE\s*', '', msg, flags=re.IGNORECASE)
+        msg = re.sub(r'\s*TERMINATE\s*$', '', msg, flags=re.IGNORECASE)
+        msg = msg.strip()
         
     if is_json:
         if "```json" in msg:
             msg = msg.split("```json")[1].split("```")[0].strip()
         elif "```" in msg:
             msg = msg.split("```")[1].split("```")[0].strip()
+        else:
+            # Fallback to extract from the first '{' to the last '}'
+            start_idx = msg.find('{')
+            end_idx = msg.rfind('}')
+            if start_idx != -1 and end_idx != -1 and end_idx > start_idx:
+                msg = msg[start_idx:end_idx+1].strip()
             
     return msg
 

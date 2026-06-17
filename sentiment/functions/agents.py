@@ -106,3 +106,63 @@ def create_macro_cio_agent(prompt_path, schema_path, example_path, llm_config):
         },
         llm_config=llm_config
     )
+
+def create_decomposition_agent(prompt_path, schema_path, example_path, llm_config):
+    """Instantiates and returns the Decomposition Worker agent."""
+    prompt_template = read_file_content(prompt_path)
+    schema_str = read_file_content(schema_path)
+    example_str = read_file_content(example_path)
+    
+    profile = prompt_template.format(
+        SCHEMA=schema_str,
+        EXAMPLES=example_str
+    )
+    
+    return FinRobot(
+        agent_config={
+            "name": "Decomposition_Worker",
+            "description": "Decomposition worker that decomposes the ETF into its constituent tickers and weights.",
+            "profile": profile,
+            "toolkits": []
+        },
+        llm_config=llm_config
+    )
+
+def create_textual_inertia_agent(prompt_path, llm_config):
+    """Instantiates and returns the Textual Inertia (\"Lazy Prices\") Agent."""
+    profile = read_file_content(prompt_path)
+    return FinRobot(
+        agent_config={
+            "name": "Textual_Inertia_Agent",
+            "description": "Tracks text deviations between consecutive annual corporate filings (10-K).",
+            "profile": profile,
+            "toolkits": []
+        },
+        llm_config=llm_config
+    )
+
+def create_tension_extractor_agent(prompt_path, llm_config):
+    """Instantiates and returns the Analyst Q&A Tension Extractor Agent."""
+    profile = read_file_content(prompt_path)
+    return FinRobot(
+        agent_config={
+            "name": "Tension_Extractor_Agent",
+            "description": "Analyzes earnings call transcripts to trace signs of corporate tension and defensiveness.",
+            "profile": profile,
+            "toolkits": []
+        },
+        llm_config=llm_config
+    )
+
+def create_scribe_agent(prompt_path, llm_config):
+    """Instantiates and returns the Thesis-CoT Scribe Agent."""
+    profile = read_file_content(prompt_path)
+    return FinRobot(
+        agent_config={
+            "name": "Thesis_CoT_Scribe",
+            "description": "Compliance documentarian that writes override narrative justifications for portfolio drifts.",
+            "profile": profile,
+            "toolkits": []
+        },
+        llm_config=llm_config
+    )

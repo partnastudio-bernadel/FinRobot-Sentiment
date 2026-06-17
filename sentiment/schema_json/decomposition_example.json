@@ -1,0 +1,19 @@
+{
+  "etf_symbol": "SPY",
+  "constituents": [
+    {
+      "ticker": "MSFT",
+      "weight": 0.0825
+    },
+    {
+      "ticker": "AAPL",
+      "weight": 0.0715
+    },
+    {
+      "ticker": "NVDA",
+      "weight": 0.0650
+    }
+  ],
+  "error_flag": false,
+  "error_reason": null
+}

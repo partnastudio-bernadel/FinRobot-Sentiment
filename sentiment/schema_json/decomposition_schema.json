@@ -1,0 +1,39 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ETFDecompositionReport",
+  "type": "object",
+  "properties": {
+    "etf_symbol": {
+      "type": "string",
+      "description": "The unique ticker symbol of the ETF (e.g. 'SPY')."
+    },
+    "constituents": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "ticker": {
+            "type": "string",
+            "description": "The constituent ticker symbol."
+          },
+          "weight": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 1.0,
+            "description": "Relative percentage allocation weight (e.g., 0.0825 for 8.25%)."
+          }
+        },
+        "required": ["ticker", "weight"]
+      }
+    },
+    "error_flag": {
+      "type": "boolean",
+      "description": "True if an error occurred during retrieval or decomposition."
+    },
+    "error_reason": {
+      "type": ["string", "null"],
+      "description": "The reason for the error, or null if successful."
+    }
+  },
+  "required": ["etf_symbol", "constituents", "error_flag", "error_reason"]
+}

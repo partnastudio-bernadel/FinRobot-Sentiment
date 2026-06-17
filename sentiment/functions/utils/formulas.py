@@ -56,11 +56,14 @@ def calculate_macro_surprise(
         A tuple of (surprise_index, warning_flag).
         warning_flag is True if historical_std was invalid (<= 0 or None) and standard fallback of 1.0 was used.
     """
-    # Event tier static weights
+    # Event tier static weights (supports color codes or priority strings)
     tier_weights = {
         "red": 1.0,
+        "high": 1.0,
         "orange": 0.5,
-        "yellow": 0.2
+        "medium": 0.5,
+        "yellow": 0.2,
+        "low": 0.2
     }
     
     omega = tier_weights.get(tier.lower(), 0.2)
@@ -162,3 +165,19 @@ def calculate_portfolio_drift(
         total_drift += abs(actual_w - target_w)
         
     return total_drift
+
+
+def normalize_weights(weights: Dict[str, float]) -> Dict[str, float]:
+    """Normalizes a dictionary of weights so that their sum equals 1.0.
+    
+    Args:
+        weights: Dictionary mapping assets to their raw weights.
+        
+    Returns:
+        Dictionary mapping assets to normalized weights.
+    """
+    total = sum(weights.values())
+    if total == 0.0:
+        return weights
+    return {ticker: weight / total for ticker, weight in weights.items()}
+

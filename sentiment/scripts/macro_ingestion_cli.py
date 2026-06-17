@@ -14,26 +14,22 @@ if sentiment_dir not in sys.path:
 # Import required modular dependencies
 try:
     import autogen
-    from autogen import UserProxyAgent, register_function, initiate_chats
-    from functions.utils.mcp_helper import (
-        run_async_in_thread,
-        async_query_alpha_vantage_mcp,
-        async_query_forexfactory_mcp
-    )
+    from autogen import UserProxyAgent, register_function
     from functions.tools.mcp_tools import (
         get_forexfactory_economic_calendar,
-        get_alpha_vantage_historical_std
+        get_alpha_vantage_historical_std,
+        set_scheduler,
+        set_calibration_agent
     )
     from functions.utils.formulas import calculate_macro_surprise
     from functions.utils.read_and_clean import (
         strip_name_hook,
         extract_and_clean_response
     )
-    from functions import (
-        create_forexfactory_agent,
-        create_alphavantage_agent,
-        create_macro_cio_agent
-    )
+    from functions.utils.scheduler import MacroScheduler
+    from functions.utils.calibration_agent import MacroSurpriseCalibrationAgent
+    from functions.utils.audit_logger import log_scheduler_event, extract_scheduler_block
+    from functions import create_macro_cio_agent
     from functions.utils.config import generate_config
 except ImportError as e:
     print(f"Error importing required macro ingestion modules: {e}", file=sys.stderr)
@@ -41,24 +37,13 @@ except ImportError as e:
     sys.exit(1)
 
 
-def run_macro_ingestion(
+def run_macro_ingestion_single(
     event_name: str,
     indicator_name: str,
     env_path: str = None
 ) -> dict:
     """
-    Orchestrates the multi-agent macro ingestion and surprise score calculation workflow.
-    
-    This function is designed to be easily imported and integrated by external controllers,
-    such as FastAPI routes, message queues, or cron scripts.
-    
-    Args:
-        event_name: The target economic event name (e.g. 'CPI m/m').
-        indicator_name: The baseline macro indicator name (e.g. 'CPI').
-        env_path: Optional path to the env file containing API keys and endpoints.
-        
-    Returns:
-        A dictionary representing the final calculated surprise report.
+    Orchestrates the single-agent direct tool-calling macro ingestion workflow.
     """
     # 1. Resolve paths
     if env_path is None:
@@ -77,147 +62,84 @@ def run_macro_ingestion(
     load_dotenv(env_path, override=True)
 
     # 3. Setup LLM configurations
-    # Re-generate configs dynamically based on the custom env loaded above
-    nvidia_base_model = os.getenv("NVIDIA_BASE_MODEL", "").strip('"\' ')
-    nvidia_tooling_model = os.getenv("NVIDIA_TOOLING_MODEL", "meta/llama-3.1-8b-instruct").strip('"\' ')
-    nvidia_api_endpoint = os.getenv("NVIDIA_API_ENDPOINT", "https://integrate.api.nvidia.com/v1").strip('"\' ')
-    nvidia_api_key = os.getenv("NVIDIA_API_KEY", "").strip('"\' ')
+    nvidia_tooling_model = os.getenv("NVIDIA_TOOLING_MODEL", "meta/llama-3.1-8b-instruct").strip('"\'  ')
+    nvidia_api_endpoint = os.getenv("NVIDIA_API_ENDPOINT", "https://integrate.api.nvidia.com/v1").strip('"\'  ')
+    nvidia_api_key = os.getenv("NVIDIA_API_KEY", "").strip('"\'  ')
     
     if not nvidia_api_key:
         raise ValueError("NVIDIA_API_KEY is not configured in the loaded environment variables.")
 
+    # In mcp_helper, read SCRAPER_TIMEOUT_MS if it exists to align timeouts
+    env_timeout = os.getenv("SCRAPER_TIMEOUT_MS")
+    if env_timeout:
+        try:
+            import functions.utils.mcp_helper as mh
+            mh._MCP_TIMEOUT = float(env_timeout) / 1000.0
+            print(f"[*] Dynamically set client MCP timeout to {mh._MCP_TIMEOUT}s from environment.")
+        except Exception as e:
+            print(f"[!] Warning: failed to dynamically set client MCP timeout: {e}")
+
     config_list = generate_config(nvidia_tooling_model, nvidia_api_endpoint, nvidia_api_key)
-    base_config_list = generate_config(nvidia_base_model, nvidia_api_endpoint, nvidia_api_key)
-    
     tooling_llm_config = {"config_list": config_list, "model": nvidia_tooling_model}
-    base_llm_config = {"config_list": base_config_list, "model": nvidia_base_model}
 
-    # 4. Instantiate sub-agents and orchestrator
-    forexfactory_agent = create_forexfactory_agent(
-        os.path.join(prompt_dir, "forexfactory_scraper_prompt.txt"),
-        os.path.join(schema_dir, "forexfactory_schema.json"),
-        os.path.join(schema_dir, "forexfactory_example.json"),
-        tooling_llm_config
-    )
+    # 3b. Instantiate Smart Scheduler and Calibration Agent, inject into mcp_tools
+    scheduler = MacroScheduler()
+    calibration_agent = MacroSurpriseCalibrationAgent()
+    set_scheduler(scheduler)
+    set_calibration_agent(calibration_agent)
+    scheduler.reset()  # Ensure clean state before this pipeline run
 
-    alphavantage_agent = create_alphavantage_agent(
-        os.path.join(prompt_dir, "alphavantage_agent_prompt.txt"),
-        os.path.join(schema_dir, "alphavantage_schema.json"),
-        os.path.join(schema_dir, "alphavantage_example.json"),
-        tooling_llm_config
-    )
-
+    # 4. Instantiate Chief Macro Economist (pointing to our single-agent prompt file)
     macro_cio_agent = create_macro_cio_agent(
         os.path.join(prompt_dir, "chief_macro_economist_prompt.txt"),
         os.path.join(schema_dir, "macro_cio_schema.json"),
         os.path.join(schema_dir, "macro_cio_example.json"),
-        base_llm_config
+        tooling_llm_config
     )
 
     user_proxy = UserProxyAgent(
         name="User_Proxy",
         human_input_mode="NEVER",
         is_termination_msg=lambda x: x.get("content", "") and "TERMINATE" in x.get("content", ""),
-        max_consecutive_auto_reply=1,
+        max_consecutive_auto_reply=15,  # Give enough turns for direct tool calling cycles
         code_execution_config={"use_docker": False}
     )
 
     # Register strip_name_hook to address strict NIM payload parameters
-    for agent in [user_proxy, forexfactory_agent, alphavantage_agent, macro_cio_agent]:
+    for agent in [user_proxy, macro_cio_agent]:
         agent.register_hook(
             hookable_method="process_all_messages_before_reply",
             hook=strip_name_hook
         )
 
-    # 5. Register Python functions as AutoGen tool calls
+    # 5. Register Python functions as AutoGen tool calls directly to the Chief Economist
+    # In this single agent design, Chief Economist proposes and User Proxy executes.
     register_function(
         get_forexfactory_economic_calendar,
-        caller=forexfactory_agent,
-        executor=macro_cio_agent,
+        caller=macro_cio_agent,
+        executor=user_proxy,
         name="get_forexfactory_economic_calendar",
         description="Retrieves economic calendar events from ForexFactory for a specified period."
     )
 
     register_function(
         get_alpha_vantage_historical_std,
-        caller=alphavantage_agent,
-        executor=macro_cio_agent,
+        caller=macro_cio_agent,
+        executor=user_proxy,
         name="get_alpha_vantage_historical_std",
         description="Retrieves rolling historical standard deviation of a macroeconomic indicator from Alpha Vantage."
     )
 
-    # 6. Configure custom nested chat reply handler to resolve AutoGen swallowing bugs
-    def custom_macro_nested_chat_reply(chat_queue, recipient, messages, sender, config):
-        chats_to_run = recipient._get_chats_to_run(chat_queue, recipient, messages, sender, config)
-        if not chats_to_run:
-            return True, None
-            
-        print(f"\n[+] Running nested delegation chats sequentially...")
-        res = initiate_chats(chats_to_run)
-        
-        # Extract the results from sub-agents
-        forexfactory_summary = res[0].summary
-        if not forexfactory_summary or not forexfactory_summary.strip():
-            for msg in reversed(res[0].chat_history):
-                content = msg.get("content")
-                if isinstance(content, str) and content.strip():
-                    forexfactory_summary = content.strip()
-                    break
-
-        alphavantage_summary = res[1].summary
-        if not alphavantage_summary or not alphavantage_summary.strip():
-            for msg in reversed(res[1].chat_history):
-                content = msg.get("content")
-                if isinstance(content, str) and content.strip():
-                    alphavantage_summary = content.strip()
-                    break
-        
-        combined_summary = (
-            f"Economic Calendar Events Data:\n{forexfactory_summary}\n\n"
-            f"Historical Standard Deviation Data:\n{alphavantage_summary}"
-        )
-        
-        print("\n[+] Injecting combined nested chat results back to the Chief Economist:")
-        print(combined_summary)
-        
-        # Send direction corrected (User_Proxy -> Chief_Macro_Economist) so 70B treats it as incoming input
-        sender.send(
-            message=combined_summary,
-            recipient=recipient,
-            request_reply=False,
-            silent=True
-        )
-        
-        return False, None
-
-    # Define delegation chats
-    nested_chats = [
-        {
-            "recipient": forexfactory_agent,
-            "message": lambda recipient, messages, sender, config: (
-                f"Please retrieve the economic calendar events for this month to find the USD '{event_name}' details."
-            ),
-            "summary_method": "last_msg",
-            "max_turns": 2,
-        },
-        {
-            "recipient": alphavantage_agent,
-            "message": lambda recipient, messages, sender, config: (
-                f"Please compute and return the rolling historical standard deviation for macro indicator '{indicator_name}' (window 12)."
-            ),
-            "summary_method": "last_msg",
-            "max_turns": 2,
-        }
-    ]
-
-    macro_cio_agent.register_nested_chats(
-        nested_chats,
-        trigger=user_proxy,
-        reply_func_from_nested_chats=custom_macro_nested_chat_reply
+    register_function(
+        calculate_macro_surprise,
+        caller=macro_cio_agent,
+        executor=user_proxy,
+        name="calculate_macro_surprise",
+        description="Computes macroeconomic surprise metrics."
     )
 
-    # 7. Execute Chat
-    print(f"\n[+] Initiating Macro Ingestion delegation workflow for event: '{event_name}'...")
+    # 6. Execute Chat
+    print(f"\n[+] Initiating Single-Agent Macro Ingestion workflow for event: '{event_name}'...")
     user_proxy.initiate_chat(
         macro_cio_agent,
         message=(
@@ -226,11 +148,11 @@ def run_macro_ingestion(
         )
     )
 
-    # 8. Extract & clean JSON payload
+    # 7. Extract & clean JSON payload
     final_macro_report = extract_and_clean_response(user_proxy, macro_cio_agent, is_json=True)
     
     try:
-        return json.loads(final_macro_report)
+        parsed = json.loads(final_macro_report)
     except json.JSONDecodeError as e:
         return {
             "event_name": event_name,
@@ -240,10 +162,18 @@ def run_macro_ingestion(
             "raw_output": final_macro_report
         }
 
+    # 8. Strip _scheduler audit block (if present) and route to audit logger
+    parsed, scheduler_meta = extract_scheduler_block(parsed)
+    if scheduler_meta:
+        scheduler_meta["event_name"] = event_name
+        log_scheduler_event(scheduler_meta)
+
+    return parsed
+
 
 def main():
     parser = argparse.ArgumentParser(
-        description="CLI utility for running the Multi-Agent Macro Ingestion & Surprise score pipeline."
+        description="CLI utility for running the Single-Agent Macro Ingestion pipeline."
     )
     parser.add_argument(
         "--event", "-v",
@@ -266,10 +196,10 @@ def main():
     
     args = parser.parse_args()
     
-    print(f"Starting macro surprise calculation for '{args.event}' using indicator '{args.indicator}'...")
+    print(f"Starting single-agent macro surprise calculation for '{args.event}' using indicator '{args.indicator}'...")
     
     try:
-        report = run_macro_ingestion(
+        report = run_macro_ingestion_single(
             event_name=args.event,
             indicator_name=args.indicator,
             env_path=args.env

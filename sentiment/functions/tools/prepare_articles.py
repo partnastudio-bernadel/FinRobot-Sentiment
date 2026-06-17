@@ -87,4 +87,26 @@ def prepare_articles(df_news, db, limit=5, k_examples=2):
         })
         
 
-    return articles_to_analyze
+    return articles_to_analyze
+
+
+def assign_label(score: float) -> str:
+    """Assigns a sentiment classification label based on the calculated sentiment score.
+
+    Use this tool when you have computed the final sentiment score of an asset 
+    and need to classify it as 'Positive', 'Negative', or 'Neutral'. Do not use 
+    this tool to calculate the score itself or to parse news articles.
+
+    Args:
+        score (float): The calculated raw sentiment score. Must be between -1.0 and 1.0.
+
+    Returns:
+        str: The sentiment label, which is one of: 'Positive' (score > 0.15), 
+            'Negative' (score < -0.15), or 'Neutral' (else).
+    """
+    if score > 0.15:
+        return "Positive"
+    elif score < -0.15:
+        return "Negative"
+    else:
+        return "Neutral"

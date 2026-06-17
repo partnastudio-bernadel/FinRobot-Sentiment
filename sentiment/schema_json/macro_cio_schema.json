@@ -1,4 +1,5 @@
 {
+  "reasoning_summary": "string",
   "event_name": "string",
   "category": "string",
   "timestamp": "string",
@@ -12,6 +13,5 @@
   "metrics": {
     "macro_surprise_score": "float",
     "warning_flag": "boolean"
-  },
-  "reasoning_summary": "string"
+  }
 }

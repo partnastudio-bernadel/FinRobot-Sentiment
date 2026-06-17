@@ -7,6 +7,10 @@ from concurrent.futures import Future
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 from mcp.client.streamable_http import streamable_http_client
+from functions.utils.scheduler import RateLimitError, MCPConnectionError
+
+# Network timeout enforced on every MCP session call (TRD: 10-second threshold)
+_MCP_TIMEOUT: float = 10.0
 
 # Resolve sentiment directory relative to this file's location
 # Path: sentiment/functions/utils/mcp_helper.py -> sentiment/
@@ -54,7 +58,10 @@ async def async_query_alpha_vantage_mcp(tool_name: str, arguments: dict, api_key
                     wrapped_arguments = arguments
                     mcp_tool = tool_name
                 
-                result = await session.call_tool(mcp_tool, wrapped_arguments)
+                result = await asyncio.wait_for(
+                    session.call_tool(mcp_tool, wrapped_arguments),
+                    timeout=_MCP_TIMEOUT
+                )
                 if isinstance(result.content, list) and len(result.content) > 0:
                     first_text = result.content[0].text
                     if first_text.strip().startswith("["):
@@ -63,8 +70,16 @@ async def async_query_alpha_vantage_mcp(tool_name: str, arguments: dict, api_key
                         return json.loads(first_text)
                     return [json.loads(content.text) for content in result.content if content.text]
                 return {"status": "error", "error_msg": "Empty tool response"}
+    except asyncio.TimeoutError:
+        raise asyncio.TimeoutError(f"Alpha Vantage MCP call exceeded {_MCP_TIMEOUT}s timeout.")
+    except (ConnectionError, OSError) as e:
+        raise MCPConnectionError(f"Alpha Vantage MCP connection failed: {e}") from e
     except Exception as e:
-        return {"status": "error", "error_msg": f"MCP Connection failed: {str(e)}"}
+        # Surface rate limit information as a typed exception for the scheduler
+        err_str = str(e).lower()
+        if "429" in err_str or "403" in err_str or "rate limit" in err_str:
+            raise RateLimitError(f"Alpha Vantage rate limit: {e}") from e
+        raise MCPConnectionError(f"Alpha Vantage MCP unexpected error: {e}") from e
 
 async def async_query_forexfactory_mcp(tool_name: str, arguments: dict) -> dict:
     """Query the local ForexFactory MCP server using stdio transport."""
@@ -85,7 +100,10 @@ async def async_query_forexfactory_mcp(tool_name: str, arguments: dict) -> dict:
         async with stdio_client(server_params, errlog=sys.__stderr__) as (read, write):
             async with ClientSession(read, write) as session:
                 await session.initialize()
-                result = await session.call_tool(tool_name, arguments)
+                result = await asyncio.wait_for(
+                    session.call_tool(tool_name, arguments),
+                    timeout=_MCP_TIMEOUT
+                )
                 if isinstance(result.content, list) and len(result.content) > 0:
                     first_text = result.content[0].text
                     if first_text.strip().startswith("["):
@@ -94,5 +112,9 @@ async def async_query_forexfactory_mcp(tool_name: str, arguments: dict) -> dict:
                         return json.loads(first_text)
                     return [json.loads(content.text) for content in result.content if content.text]
                 return {"status": "error", "error_msg": "Empty tool response"}
+    except asyncio.TimeoutError:
+        raise asyncio.TimeoutError(f"ForexFactory MCP call exceeded {_MCP_TIMEOUT}s timeout.")
+    except (ConnectionError, OSError) as e:
+        raise MCPConnectionError(f"ForexFactory stdio server connection failed: {e}") from e
     except Exception as e:
-        return {"status": "error", "error_msg": f"Local stdio server launch failed: {str(e)}"}
+        raise MCPConnectionError(f"ForexFactory stdio server unexpected error: {e}") from e
