@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 
 # Resolve paths relative to this file
 current_file_dir = os.path.dirname(os.path.abspath(__file__))
-logs_dir = os.path.abspath(os.path.join(current_file_dir, "..", "..", "logs"))
+logs_dir = os.path.abspath(os.path.join(current_file_dir, "..", "..", "..", "logs"))
 _COMPLIANCE_LOG_PATH = os.path.join(logs_dir, "compliance_audit.jsonl")
 
 def log_compliance_event(event_type: str, metadata: dict, log_path: str = _COMPLIANCE_LOG_PATH) -> None:

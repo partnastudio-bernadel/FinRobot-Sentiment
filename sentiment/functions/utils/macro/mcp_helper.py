@@ -7,15 +7,15 @@ from concurrent.futures import Future
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 from mcp.client.streamable_http import streamable_http_client
-from functions.utils.scheduler import RateLimitError, MCPConnectionError
+from functions.utils.macro.scheduler import RateLimitError, MCPConnectionError
 
 # Network timeout enforced on every MCP session call (TRD: 10-second threshold)
 _MCP_TIMEOUT: float = 10.0
 
 # Resolve sentiment directory relative to this file's location
-# Path: sentiment/functions/utils/mcp_helper.py -> sentiment/
+# Path: sentiment/functions/utils/macro/mcp_helper.py -> sentiment/
 current_file_dir = os.path.dirname(os.path.abspath(__file__))
-sentiment_dir = os.path.abspath(os.path.join(current_file_dir, "..", ".."))
+sentiment_dir = os.path.abspath(os.path.join(current_file_dir, "..", "..", ".."))
 
 def run_async_in_thread(coro):
     """Run an async coroutine in a background thread with Windows subprocess support."""

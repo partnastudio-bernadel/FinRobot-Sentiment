@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 load_dotenv(".env.local")
 
 # Import modular helper submodules from their new locations
-from functions.utils.standardizer import standardize_df
+from functions.utils.common.standardizer import standardize_df
 from functions.providers.alpha_vantage import fetch_alpha_vantage
 from functions.providers.news_api import fetch_news_api
 from functions.providers.seeking_alpha import fetch_seeking_alpha_rapidapi

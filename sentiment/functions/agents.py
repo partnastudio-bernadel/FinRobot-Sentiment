@@ -1,5 +1,5 @@
 from finrobot.agents.workflow import FinRobot
-from .utils.read_and_clean import read_file_content
+from .utils.common.read_and_clean import read_file_content
 
 def create_scorer_agent(prompt_path, schema_path, llm_config):
     """Instantiates and returns the Sentiment Scorer agent."""
@@ -166,3 +166,81 @@ def create_scribe_agent(prompt_path, llm_config):
         },
         llm_config=llm_config
     )
+
+
+def setup_sentiment_pipeline_agents(
+    llm_config: dict,
+    base_llm_config: dict,
+    kimi_llm_config: dict,
+    prompt_dir: str,
+    schema_dir: str
+) -> dict:
+    """Instantiates and configures all five pipeline agents, applying name stripping hooks.
+    
+    Returns a dictionary of:
+        {
+            "user_proxy": user_proxy,
+            "scorer_agent": scorer_agent,
+            "cio_agent": cio_agent,
+            "textual_inertia_agent": textual_inertia_agent,
+            "tension_extractor_agent": tension_extractor_agent,
+            "scribe_agent": scribe_agent
+        }
+    """
+    import os
+    from autogen import UserProxyAgent
+    from .utils.common.read_and_clean import strip_name_hook
+
+    user_proxy = UserProxyAgent(
+        name="User_Proxy",
+        human_input_mode="NEVER",
+        is_termination_msg=lambda x: x.get("content", "") and "TERMINATE" in x.get("content", ""),
+        max_consecutive_auto_reply=15,
+        code_execution_config={"use_docker": False}
+    )
+    
+    scorer_agent = create_scorer_agent(
+        prompt_path=os.path.join(prompt_dir, "sentiment_prompt.txt"),
+        schema_path=os.path.join(schema_dir, "scorer_schema.json"),
+        llm_config=llm_config
+    )
+    
+    cio_agent = create_cio_agent(
+        prompt_path=os.path.join(prompt_dir, "cio_prompt.txt"),
+        schema_path=os.path.join(schema_dir, "sentiment_schema.json"),
+        output_schema_path=os.path.join(schema_dir, "cio_output_schema.json"),
+        scored_articles_path=os.path.join(schema_dir, "cio_scored_articles.json"),
+        llm_config=base_llm_config
+    )
+
+    textual_inertia_agent = create_textual_inertia_agent(
+        prompt_path=os.path.join(prompt_dir, "textual_inertia_prompt.txt"),
+        llm_config=kimi_llm_config
+    )
+
+    tension_extractor_agent = create_tension_extractor_agent(
+        prompt_path=os.path.join(prompt_dir, "tension_extractor_prompt.txt"),
+        llm_config=kimi_llm_config
+    )
+
+    scribe_agent = create_scribe_agent(
+        prompt_path=os.path.join(prompt_dir, "scribe_prompt.txt"),
+        llm_config=kimi_llm_config
+    )
+
+    # Register strip name hooks to avoid NIM errors
+    agents_list = [user_proxy, scorer_agent, cio_agent, textual_inertia_agent, tension_extractor_agent, scribe_agent]
+    for agent in agents_list:
+        agent.register_hook(
+            hookable_method="process_all_messages_before_reply",
+            hook=strip_name_hook
+        )
+
+    return {
+        "user_proxy": user_proxy,
+        "scorer_agent": scorer_agent,
+        "cio_agent": cio_agent,
+        "textual_inertia_agent": textual_inertia_agent,
+        "tension_extractor_agent": tension_extractor_agent,
+        "scribe_agent": scribe_agent
+    }

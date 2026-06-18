@@ -1,5 +1,13 @@
+import os
+import sys
 import unittest
-from sentiment.functions.utils.formulas import (
+
+# Ensure the sentiment directory is on the path
+_sentinel_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
+if _sentinel_dir not in sys.path:
+    sys.path.insert(0, _sentinel_dir)
+
+from functions.utils.math.formulas import (
     calculate_raw_sentiment,
     calculate_macro_surprise,
     calculate_effective_sentiment,

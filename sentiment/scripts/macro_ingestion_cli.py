@@ -21,16 +21,16 @@ try:
         set_scheduler,
         set_calibration_agent
     )
-    from functions.utils.formulas import calculate_macro_surprise
-    from functions.utils.read_and_clean import (
+    from functions.utils.math.formulas import calculate_macro_surprise
+    from functions.utils.common.read_and_clean import (
         strip_name_hook,
         extract_and_clean_response
     )
-    from functions.utils.scheduler import MacroScheduler
-    from functions.utils.calibration_agent import MacroSurpriseCalibrationAgent
-    from functions.utils.audit_logger import log_scheduler_event, extract_scheduler_block
+    from functions.utils.macro.scheduler import MacroScheduler
+    from functions.utils.macro.calibration_agent import MacroSurpriseCalibrationAgent
+    from functions.utils.logging.audit_logger import log_scheduler_event, extract_scheduler_block
     from functions import create_macro_cio_agent
-    from functions.utils.config import generate_config
+    from functions.utils.common.config import generate_config
 except ImportError as e:
     print(f"Error importing required macro ingestion modules: {e}", file=sys.stderr)
     print("Ensure you have activated your virtual environment and installed all dependencies.", file=sys.stderr)
@@ -73,7 +73,7 @@ def run_macro_ingestion_single(
     env_timeout = os.getenv("SCRAPER_TIMEOUT_MS")
     if env_timeout:
         try:
-            import functions.utils.mcp_helper as mh
+            import functions.utils.macro.mcp_helper as mh
             mh._MCP_TIMEOUT = float(env_timeout) / 1000.0
             print(f"[*] Dynamically set client MCP timeout to {mh._MCP_TIMEOUT}s from environment.")
         except Exception as e:

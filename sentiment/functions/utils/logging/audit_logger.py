@@ -15,8 +15,8 @@ from datetime import datetime, timezone
 
 # Default log file path (relative to the sentiment/ directory)
 _DEFAULT_LOG_DIR = os.path.join(
-    os.path.dirname(os.path.abspath(__file__)),  # utils/
-    "..", "..",                                   # -> sentiment/
+    os.path.dirname(os.path.abspath(__file__)),  # utils/logging/
+    "..", "..", "..",                             # -> sentiment/
     "logs"
 )
 _DEFAULT_LOG_PATH = os.path.join(_DEFAULT_LOG_DIR, "scheduler_audit.jsonl")

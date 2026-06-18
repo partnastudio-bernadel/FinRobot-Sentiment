@@ -2,8 +2,8 @@ import time
 from datetime import datetime, timezone
 from typing import Optional, Tuple
 
-from functions.utils.mcp_helper import run_async_in_thread, async_query_alpha_vantage_mcp
-from functions.utils.scheduler import RateLimitError
+from functions.utils.macro.mcp_helper import run_async_in_thread, async_query_alpha_vantage_mcp
+from functions.utils.macro.scheduler import RateLimitError
 
 
 class MacroSurpriseCalibrationAgent:

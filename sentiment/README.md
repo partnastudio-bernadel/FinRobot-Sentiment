@@ -42,7 +42,7 @@ All implemented code and assets are located inside the `sentiment/` directory:
 | :--- | :--- | :--- |
 | **`functions/aggregator/`** | Standardized news fetcher, standardizing articles across 11 sources. | [aggregator.py](file:///d:/PartnaStudio/sentinel/stack/FinRobot-IntentChain/sentiment/functions/aggregator/aggregator.py) |
 | **`functions/tools/`** | Agent definition factories, prompt loaders, and custom response/chat behaviors. | [agents.py](file:///d:/PartnaStudio/sentinel/stack/FinRobot-IntentChain/sentiment/functions/tools/agents.py) <br> [custom_reply.py](file:///d:/PartnaStudio/sentinel/stack/FinRobot-IntentChain/sentiment/functions/tools/custom_reply.py) <br> [prepare_articles.py](file:///d:/PartnaStudio/sentinel/stack/FinRobot-IntentChain/sentiment/functions/tools/prepare_articles.py) |
-| **`functions/utils/`** | Helpers for FAISS database indexing, API environment configurations, text cleaning, and mathematical utility functions. | [build.py](file:///d:/PartnaStudio/sentinel/stack/FinRobot-IntentChain/sentiment/functions/utils/build.py) <br> [config.py](file:///d:/PartnaStudio/sentinel/stack/FinRobot-IntentChain/sentiment/functions/utils/config.py) <br> [read_and_clean.py](file:///d:/PartnaStudio/sentinel/stack/FinRobot-IntentChain/sentiment/functions/utils/read_and_clean.py) <br> [formulas.py](file:///d:/PartnaStudio/sentinel/stack/FinRobot-IntentChain/sentiment/functions/utils/formulas.py) |
+| **`functions/utils/`** | Structured utilities package divided into sub-packages:<br>- **`common/`**: Indexing, config, data cleaning<br>- **`math/`**: Formula math and formulas tests<br>- **`logging/`**: Audit, compliance, pipeline logs<br>- **`macro/`**: Scrapers, calendar, surprise MCP<br>- **`news/`**: Orchestrator, news helpers | [common/](file:///d:/PartnaStudio/sentinel/stack/FinRobot-IntentChain/sentiment/functions/utils/common/) <br> [math/](file:///d:/PartnaStudio/sentinel/stack/FinRobot-IntentChain/sentiment/functions/utils/math/) <br> [logging/](file:///d:/PartnaStudio/sentinel/stack/FinRobot-IntentChain/sentiment/functions/utils/logging/) <br> [macro/](file:///d:/PartnaStudio/sentinel/stack/FinRobot-IntentChain/sentiment/functions/utils/macro/) <br> [news/](file:///d:/PartnaStudio/sentinel/stack/FinRobot-IntentChain/sentiment/functions/utils/news/) |
 | **`prompts/`** | Standalone instruction prompt configuration templates for Scorer and CIO agents. | [sentiment_prompt.txt](file:///d:/PartnaStudio/sentinel/stack/FinRobot-IntentChain/sentiment/prompts/sentiment_prompt.txt) <br> [cio_prompt.txt](file:///d:/PartnaStudio/sentinel/stack/FinRobot-IntentChain/sentiment/prompts/cio_prompt.txt) |
 | **`schema_json/`** | JSON schema validation contracts determining incoming structures and outgoing report payloads. | [scorer_schema.json](file:///d:/PartnaStudio/sentinel/stack/FinRobot-IntentChain/sentiment/schema_json/scorer_schema.json) <br> [sentiment_schema.json](file:///d:/PartnaStudio/sentinel/stack/FinRobot-IntentChain/sentiment/schema_json/sentiment_schema.json) <br> [cio_output_schema.json](file:///d:/PartnaStudio/sentinel/stack/FinRobot-IntentChain/sentiment/schema_json/cio_output_schema.json) |
 | **`tutorials/`** | Interactive Jupyter Notebooks showing baseline execution, modular utilities, and nested-chat delegation. | [tutorials/](file:///d:/PartnaStudio/sentinel/stack/FinRobot-IntentChain/sentiment/tutorials/) |
@@ -84,7 +84,7 @@ sequenceDiagram
 
 ## 🧮 Offline Mathematical Formulas Library
 
-A standalone math helper module is implemented in [formulas.py](file:///d:/PartnaStudio/sentinel/stack/FinRobot-IntentChain/sentiment/functions/utils/formulas.py) and verified by unit tests in [test_formulas.py](file:///d:/PartnaStudio/sentinel/stack/FinRobot-IntentChain/sentiment/functions/utils/test_formulas.py). These functions are prepared for future database processing and rebalancing integrations:
+A standalone math helper module is implemented in [formulas.py](file:///d:/PartnaStudio/sentinel/stack/FinRobot-IntentChain/sentiment/functions/utils/math/formulas.py) and verified by unit tests in [test_formulas.py](file:///d:/PartnaStudio/sentinel/stack/FinRobot-IntentChain/sentiment/functions/utils/math/test_formulas.py). These functions are prepared for future database processing and rebalancing integrations:
 
 1. **Confidence-Weighted Raw Sentiment ($S_{\text{raw}}$)**:
    Averages raw sentiment scores $s_i \in [-1, 1]$ weighted by their prediction confidence values $c_i$:
@@ -136,9 +136,8 @@ A standalone math helper module is implemented in [formulas.py](file:///d:/Partn
 3. **Verify Installation**:
    Run the offline formulas test suite to confirm mathematical utilities execute successfully:
    ```bash
-   # Run from the project root
-   set PYTHONPATH=.;sentiment
-   python -m unittest sentiment/functions/utils/test_formulas.py
+   # Run from the project root using pytest
+   pytest sentiment/functions/utils/math/test_formulas.py
    ```
 
 4. **Running the Pipelines**:

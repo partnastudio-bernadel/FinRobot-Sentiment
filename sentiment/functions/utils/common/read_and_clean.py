@@ -37,12 +37,12 @@ def extract_and_clean_response(user_proxy, agent, is_json=False):
             msg = msg.split("```json")[1].split("```")[0].strip()
         elif "```" in msg:
             msg = msg.split("```")[1].split("```")[0].strip()
-        else:
-            # Fallback to extract from the first '{' to the last '}'
-            start_idx = msg.find('{')
-            end_idx = msg.rfind('}')
-            if start_idx != -1 and end_idx != -1 and end_idx > start_idx:
-                msg = msg[start_idx:end_idx+1].strip()
+            
+        # Extract from the first '{' to the last '}' to strip unclosed blocks and trailing text (like TERMINATE)
+        start_idx = msg.find('{')
+        end_idx = msg.rfind('}')
+        if start_idx != -1 and end_idx != -1 and end_idx > start_idx:
+            msg = msg[start_idx:end_idx+1].strip()
             
     return msg
 

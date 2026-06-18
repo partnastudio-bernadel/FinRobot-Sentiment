@@ -1,5 +1,8 @@
 # SentinelAlpha: Development Roadmap & Next Steps
 
+> [!NOTE]
+> **Last Safe Commit Before Refactoring**: `5eb1b68` ("docs: make links in README relative with sentiment folder as base")
+
 This document outlines the roadmap for the **Sentiment Alpha & Rebalancing Pipeline**, documenting what has been implemented so far and detailing the immediate next steps to link sentiment signals with portfolio governance.
 
 ---
@@ -60,6 +63,26 @@ To handle data exceptions cleanly, the system maps connections across both sourc
 ### 3. Next Engineering Sprint Milestones
 * **Expose Ingestion Endpoints**: Create dedicated endpoints within the database configuration (`POST /v1/ingest/macro-calendar`) to wire real-time text arrays directly into `calculate_macro_surprise`.
 * **Setup Redis TTL Caching**: Implement active caching on computed surprise metrics within Redis, utilizing dynamic Time-To-Live (TTL) horizons tailored around scheduled global release calendars to minimize processing overhead.
+
+---
+
+## 🧮 Step 2.5: Connect Ingestion Branches to SentinelAlpha Mathematical Core
+
+To move from independent command-line executions to a unified alpha generation pipeline, we must wire the outputs of the **Macro Ingestion** and **News Sentiment** branches into the **SentinelAlpha Mathematical Core** formulas.
+
+### Action Items:
+1. **Unify Ingestion Runner & Pipeline Orchestrator**:
+   * Develop a unified entrypoint script (`sentiment/scripts/sentinel_orchestrator.py`) that coordinates executing both pipelines, or schedules the Macro Ingestion pipeline to run periodically and store the latest Macro Shock Index ($\mathcal{S}_t$) in AppDB/Redis.
+2. **Replace Simulated Math with Core Equations**:
+   * Modify the proposed weight drift calculations in the news sentiment pipeline to import and call `calculate_effective_sentiment` from `formulas.py`.
+   * Replace the current simulated calculation:
+     `w_proposed = w_base * (1.0 + alpha_t * t_news_sentiment)`
+     with the complete architectural formula:
+     $$\text{Effective Sentiment}_{j, t} = S_{\text{raw}, j, t} \times (1 + \beta_j \cdot \mathcal{S}_t)$$
+     where $\mathcal{S}_t$ is the dynamic Macro Shock Index from the scheduler/Economist agent, and $\beta_j$ is the sector sensitivity default (or custom ticker beta).
+3. **Expose/Query Macro Shock Tensor ($S_t$)**:
+   * Configure the news sentiment pipeline to pull the most recent $\mathcal{S}_t$ value from the database or cache.
+   * If $\mathcal{S}_t$ is missing or expired, default gracefully to $\mathcal{S}_t = 0.0$ (no macro surprise tilt).
 
 ---
 

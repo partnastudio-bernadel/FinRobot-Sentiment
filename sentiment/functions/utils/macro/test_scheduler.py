@@ -15,13 +15,13 @@ from datetime import datetime, timedelta, timezone
 from unittest.mock import MagicMock, patch
 
 # Ensure the sentiment directory is on the path
-_sentinel_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+_sentinel_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 if _sentinel_dir not in sys.path:
     sys.path.insert(0, _sentinel_dir)
 
-from functions.utils.scheduler import MacroScheduler, RateLimitError, MCPConnectionError
-from functions.utils.calibration_agent import MacroSurpriseCalibrationAgent
-from functions.utils.audit_logger import extract_scheduler_block
+from functions.utils.macro.scheduler import MacroScheduler, RateLimitError, MCPConnectionError
+from functions.utils.macro.calibration_agent import MacroSurpriseCalibrationAgent
+from functions.utils.logging.audit_logger import extract_scheduler_block
 
 
 # ---------------------------------------------------------------------------
@@ -148,14 +148,14 @@ class TestMacroSurpriseCalibrationAgent(unittest.TestCase):
 
     def test_known_indicator_fallback_returns_empirical_value(self):
         """When all retries fail, should return the known fallback for CPI."""
-        with patch("functions.utils.calibration_agent.run_async_in_thread", side_effect=Exception("mocked failure")):
+        with patch("functions.utils.macro.calibration_agent.run_async_in_thread", side_effect=Exception("mocked failure")):
             std, warning = self.agent.get_historical_std("CPI", window=12, api_key="test")
         self.assertAlmostEqual(std, 1.1410887363094182)
         self.assertTrue(warning)
 
     def test_unknown_indicator_fallback_returns_default_1(self):
         """Unknown indicators should fallback to 1.0."""
-        with patch("functions.utils.calibration_agent.run_async_in_thread", side_effect=Exception("mocked failure")):
+        with patch("functions.utils.macro.calibration_agent.run_async_in_thread", side_effect=Exception("mocked failure")):
             std, warning = self.agent.get_historical_std("UNKNOWN_IND", window=12, api_key="test")
         self.assertEqual(std, 1.0)
         self.assertTrue(warning)
@@ -164,7 +164,7 @@ class TestMacroSurpriseCalibrationAgent(unittest.TestCase):
         """Second call for same indicator should return from cache."""
         # Manually prime cache
         self.agent._set_cache("TESTIND", 2.5)
-        with patch("functions.utils.calibration_agent.run_async_in_thread") as mock_fetch:
+        with patch("functions.utils.macro.calibration_agent.run_async_in_thread") as mock_fetch:
             std, warning = self.agent.get_historical_std("TESTIND", window=12, api_key="test")
         mock_fetch.assert_not_called()
         self.assertEqual(std, 2.5)
@@ -174,7 +174,7 @@ class TestMacroSurpriseCalibrationAgent(unittest.TestCase):
         """Expired cache entries should trigger a new fetch attempt."""
         agent = MacroSurpriseCalibrationAgent(cache_ttl_seconds=0)  # disable cache
         agent._set_cache("CPI", 1.5)  # manually set
-        with patch("functions.utils.calibration_agent.run_async_in_thread", side_effect=Exception("fail")):
+        with patch("functions.utils.macro.calibration_agent.run_async_in_thread", side_effect=Exception("fail")):
             std, warning = agent.get_historical_std("CPI", window=12, api_key="test")
         # With TTL=0, cache is skipped — falls back to empirical value
         self.assertAlmostEqual(std, 1.1410887363094182)

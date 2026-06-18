@@ -1,8 +1,14 @@
 import os
 import json
+import sys
 import unittest
 from unittest.mock import patch, MagicMock
 import pandas as pd
+
+# Ensure the sentiment directory is on the path
+_sentinel_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
+if _sentinel_dir not in sys.path:
+    sys.path.insert(0, _sentinel_dir)
 
 from functions.tools.edgar_tools import (
     get_cik_by_ticker,
@@ -12,7 +18,7 @@ from functions.tools.edgar_tools import (
     get_sec_user_agent
 )
 from functions.tools.transcript_tools import split_transcript, fetch_and_split_transcript
-from functions.utils.compliance_logger import log_compliance_event
+from functions.utils.logging.compliance_logger import log_compliance_event
 
 class TestReadingWorkers(unittest.TestCase):
 

@@ -7,12 +7,12 @@ This document tracks the testing results and capabilities of various LLM models 
 | Model Identifier | Model Class | ReAct Trace Quality | Tool Calling Reliability | Vulnerability to Prompt Example Mimicry | Key Observations & Testing Notes |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | **`minimaxai/minimax-m3`** | Small / Lightweight | Poor | Low (Bypassed tool calls) | High (Directly repeated example JSON) | Fails to trigger `get_alpha_vantage_historical_std`. Tends to copy the few-shot template placeholders. Not recommended for sub-agent tooling roles. |
-| **`meta/llama-3.1-8b-instruct`** | Medium | Good | Medium | High | Successfully generates reasoning traces, but requires explicit type constraints. Vulnerable to constituent fabrication/hallucination when tools return empty results (e.g., treating single stocks as 100% weight ETFs instead of raising errors). |
+| **`meta/llama-3.1-8b-instruct`** | Medium | Good | Medium (Fails on parallel tool calls) | High | Successfully generates reasoning traces, but requires explicit type constraints. On NVIDIA NIM, it fails with a 500 error if it attempts parallel tool calling, requiring `parallel_tool_calls=False` in `llm_config`. Vulnerable to constituent fabrication/hallucination when tools return empty results. |
 | **`mistralai/mistral-nemotron`** | Medium-Large | Excellent | High | Low | Excellent instruction following. Generates clear thoughts and matches tool signatures accurately. Good candidate for scrapers and baseline calculators. |
 | **`qwen/qwen3-next-80b-a3b-instruct`** | Large | Excellent | High | Low | High reasoning capacity. Autonomous tool execution is very stable. Excels at returning raw JSON blocks without surrounding markdown prose. |
 | **`meta/llama-3.1-70b-instruct`** | Large | Excellent | Very High | Low | Standard production model. Robustly handles multi-agent orchestration, complex tool inputs, and nested chat control logic. Can initially pass string representation of floats resulting in `Error: '<=' not supported between instances of 'str' and 'float'`, but successfully self-corrects when strict python typing is enforced. |
 | **`moonshotai/kimi-k2.6`** | Large | Good | High | Low | Base model candidate. Successfully retrieves calendar data and standard deviation, though it can occasionally write out tool suggestion structures in its final answer text block rather than executing purely via native tools, requiring robust parser cleanup. |
-| **`deepseek-ai/deepseek-v4-flash`** | Medium-Large | Excellent | High | Low | Tooling model candidate. Demonstrates high structural compliance and follows fallback instructions perfectly (e.g., executing graceful fallback JSON compilation with warning flags when sub-agent values like standard deviation are missing from context). |
+| **`deepseek-ai/deepseek-v4-flash`** | Medium-Large | Excellent | High (Sequential execution) | Low | Tooling model candidate. Demonstrates high structural compliance and executes sequential tools cleanly. However, it can place `TERMINATE` or trailing text inside unclosed code blocks, requiring strict `{` to `}` boundary extraction. |
 
 ---
 
@@ -44,6 +44,12 @@ This document tracks the testing results and capabilities of various LLM models 
 8. **Sub-Agent Final Answer Leakage into Context Payload:**
    When Kimi-K2.6 and similar models produce a "Final Answer" block that contains a tool suggestion trace (e.g., `***** Suggested tool call ...`), the `clean_react_summary` parser strips it down to non-data tokens (e.g., `**`), effectively blanking the value being passed to the orchestrator. This caused the `deepseek-v4-flash` orchestrator to receive an empty standard deviation value. The correct mitigation is to parse the actual numeric return value from the tool response message in the chat history rather than parsing the model's free-text summary for the value.
 
+9. **NVIDIA NIM Parallel Tool Calling Constraint**:
+   Certain endpoints (such as NVIDIA NIM hosting `meta/llama-3.1-8b-instruct`) enforce a strict API schema restriction allowing only a single tool call per inference turn. When the agent attempts parallel tool calling (requesting multiple math operations in a single response), the endpoint rejects it with a 500 error (`This model only supports single tool-calls at once!`). Setting `"parallel_tool_calls": False` in `llm_config` is required to force sequential execution.
+
+10. **Resilient JSON Extraction against Trailing Postambles (`TERMINATE`)**:
+   Some models (such as `deepseek-v4-flash`) successfully write sequential tool calls and output a formatted JSON block but may append the `TERMINATE` instruction directly after the closing JSON brace (or leave code blocks unclosed). This triggers a JSON parse error due to trailing extra data. The parser must always run a `{` to `}` boundary extraction as the final pass when `is_json=True` to strip away any trailing text.
+
 ---
 
 ## Hallucination & Limitation Profile: meta/llama-3.1-8b-instruct
@@ -63,7 +69,7 @@ During execution of the nested news-delegation flow, several distinct hallucinat
 ### 3. Preamble & Formatting Leakage (JSON Strictness)
 * **Observed Behavior:** Despite system prompt rules forbidding any text outside of the JSON payload, the 8B model frequently prefixes its output with pleasantries (e.g., *"Here is the requested analysis:"*) or wraps the output in markdown code blocks (` ```json ... ``` `).
 * **Implication:** Standard JSON parsers (`json.loads`) crash when parsing the raw response text.
-* **Mitigation:** Implemented a robust regex-based extraction utility ([extract_and_clean_response](file:///d:/PartnaStudio/sentinel/stack/FinRobot-IntentChain/sentiment/functions/utils/read_and_clean.py)) that strips preambles, postambles, and code block delimiters before attempting to deserialize the JSON.
+* **Mitigation:** Implemented a robust regex-based extraction utility ([extract_and_clean_response](file:///d:/PartnaStudio/sentinel/stack/FinRobot-IntentChain/sentiment/functions/utils/common/read_and_clean.py)) that strips preambles, postambles, and code block delimiters before attempting to deserialize the JSON.
 
 ### 4. Parameter and Signature Hallucinations (Tool Calling)
 * **Observed Behavior:** If tool description docstrings are not extremely rigid, the 8B model will hallucinate non-existent arguments (e.g., passing `ticker="MSFT"` instead of `symbol="MSFT"` or generating additional fields not defined in the function signature).

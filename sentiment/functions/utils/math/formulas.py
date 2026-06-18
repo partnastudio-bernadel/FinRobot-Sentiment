@@ -1,3 +1,4 @@
+import json
 from typing import Dict, List, Tuple, Optional, Any
 
 def calculate_raw_sentiment(articles: List[Dict[str, Any]]) -> float:
@@ -12,6 +13,12 @@ def calculate_raw_sentiment(articles: List[Dict[str, Any]]) -> float:
     Returns:
         The raw sentiment score in range [-1.0, 1.0], defaulting to 0.0 if empty or zero confidence.
     """
+    if isinstance(articles, str):
+        try:
+            articles = json.loads(articles)
+        except Exception:
+            return 0.0
+            
     if not articles:
         return 0.0
         
@@ -128,6 +135,17 @@ def calculate_portfolio_sentiment(
     Returns:
         The portfolio-weighted sentiment exposure value.
     """
+    if isinstance(weights, str):
+        try:
+            weights = json.loads(weights)
+        except Exception:
+            pass
+    if isinstance(effective_sentiments, str):
+        try:
+            effective_sentiments = json.loads(effective_sentiments)
+        except Exception:
+            pass
+            
     if not weights or not effective_sentiments:
         return 0.0
         
@@ -156,6 +174,20 @@ def calculate_portfolio_drift(
     Returns:
         The drift distance value (0.0 to 2.0).
     """
+    if isinstance(actual_weights, str):
+        try:
+            actual_weights = json.loads(actual_weights)
+        except Exception:
+            pass
+    if isinstance(target_weights, str):
+        try:
+            target_weights = json.loads(target_weights)
+        except Exception:
+            pass
+            
+    if not isinstance(actual_weights, dict) or not isinstance(target_weights, dict):
+        return 0.0
+        
     all_tickers = set(actual_weights.keys()).union(set(target_weights.keys()))
     total_drift = 0.0
     
@@ -176,6 +208,15 @@ def normalize_weights(weights: Dict[str, float]) -> Dict[str, float]:
     Returns:
         Dictionary mapping assets to normalized weights.
     """
+    if isinstance(weights, str):
+        try:
+            weights = json.loads(weights)
+        except Exception:
+            pass
+            
+    if not isinstance(weights, dict):
+        return {}
+        
     total = sum(weights.values())
     if total == 0.0:
         return weights

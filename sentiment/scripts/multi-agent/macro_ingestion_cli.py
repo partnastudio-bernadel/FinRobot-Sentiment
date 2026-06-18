@@ -15,7 +15,7 @@ if sentiment_dir not in sys.path:
 try:
     import autogen
     from autogen import UserProxyAgent, register_function, initiate_chats
-    from functions.utils.mcp_helper import (
+    from functions.utils.macro.mcp_helper import (
         run_async_in_thread,
         async_query_alpha_vantage_mcp,
         async_query_forexfactory_mcp
@@ -26,20 +26,20 @@ try:
         set_scheduler,
         set_calibration_agent
     )
-    from functions.utils.formulas import calculate_macro_surprise
-    from functions.utils.read_and_clean import (
+    from functions.utils.math.formulas import calculate_macro_surprise
+    from functions.utils.common.read_and_clean import (
         strip_name_hook,
         extract_and_clean_response
     )
-    from functions.utils.scheduler import MacroScheduler
-    from functions.utils.calibration_agent import MacroSurpriseCalibrationAgent
-    from functions.utils.audit_logger import log_scheduler_event, extract_scheduler_block
+    from functions.utils.macro.scheduler import MacroScheduler
+    from functions.utils.macro.calibration_agent import MacroSurpriseCalibrationAgent
+    from functions.utils.logging.audit_logger import log_scheduler_event, extract_scheduler_block
     from functions import (
         create_forexfactory_agent,
         create_alphavantage_agent,
         create_macro_cio_agent
     )
-    from functions.utils.config import generate_config
+    from functions.utils.common.config import generate_config
 except ImportError as e:
     print(f"Error importing required macro ingestion modules: {e}", file=sys.stderr)
     print("Ensure you have activated your virtual environment and installed all dependencies.", file=sys.stderr)

@@ -57,4 +57,20 @@ We tested our Chromium-based Playwright full-text scraper (`fetch_article_text`)
 | **wsj.com** | 🔴 **FAILED** | 0 chars | Returns empty text due to strict paywall blocking paragraph extraction. |
 | **marketwatch.com** | 🔴 **FAILED** | 0 chars | Returns empty text due to subscription wall restrictions on body paragraphs. |
 
+---
+
+## 🔊 News Feed Noise and API Authentication Issues
+
+During our testing runs for various tickers (especially for high-profile tech stocks like `AAPL` or constituents of ETFs), we have encountered significant data quality issues and access restrictions:
+
+### 1. Cross-Ticker/ETF Feed Noise
+* **The Issue**: News aggregators frequently return articles that are tagged with the target ticker (e.g., `AAPL`) but do not actually focus on that company. This is especially common with macro commentary, market wraps, or articles about unrelated companies (e.g., SpaceX, Tesla) that mention the target ticker in passing or list it under a generic "related stocks" section.
+* **Impact**: The Sentiment Scorer agent is forced to process articles that are irrelevant to the target asset's actual business performance, leading to potentially skewed sentiment scores.
+* **Mitigation**: The consolidator agent (CIO Agent) checks the articles' relevance and uses confidence-weighted metrics. The system should ideally employ stricter keyword filtering or relevance scoring at the ingestion phase to prune unrelated content before it reaches the scoring agents.
+
+### 2. HTTP 403/Forbidden Blocks
+* **The Issue**: External news providers such as SeekingAlpha, Reuters, or Bloomberg frequently block programmatic access, returning HTTP 403 status codes. 
+* **Impact**: Attempting to scrape the full-text content of these articles fails, forcing the pipeline to fall back on the snippet/summary field returned by the news search endpoint.
+* **Mitigation**: Standardize on using `yfinance`, `tmx`, and `nasdaq` for stock-specific news summary feeds, and rely on `MacroSurpriseCalibrationAgent` and ForexFactory MCP tools for macro indicators where API limits are handled gracefully with fallbacks.
+
 

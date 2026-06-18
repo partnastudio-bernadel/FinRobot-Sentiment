@@ -67,14 +67,14 @@ Both scripts are architected around clean, decoupled core functions. You can imp
 
 ```python
 # Import the news sentiment orchestrator
-from scripts.news_sentiment_cli import run_sentiment_analysis
+from functions.utils.news.pipeline_orchestrator import run_sentiment_analysis
 
-result = run_sentiment_analysis(ticker="AAPL", limit=5, holdings_count=5)
-print(f"Weighted average sentiment: {result['metrics']['average_sentiment']}")
+result = run_sentiment_analysis(ticker="AAPL", limit=5, holdings=5)
+print(f"Weighted average sentiment: {result['metrics']['sentiment_score']}")
 
-# Import the macro ingestion orchestrator
-from scripts.macro_ingestion_cli import run_macro_ingestion
+# Import the macro economic surprise ingestion function
+from scripts.macro_ingestion_cli import run_macro_ingestion_single
 
-macro_report = run_macro_ingestion(event_name="CPI m/m", indicator_name="CPI")
+macro_report = run_macro_ingestion_single(event_name="CPI m/m", indicator_name="CPI")
 print(f"Calculated surprise index S_t: {macro_report['metrics']['macro_surprise_score']}")
 ```

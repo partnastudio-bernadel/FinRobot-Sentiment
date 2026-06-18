@@ -1,12 +1,12 @@
 import os
 import numpy as np
-from functions.utils.mcp_helper import (
+from functions.utils.macro.mcp_helper import (
     run_async_in_thread,
     async_query_forexfactory_mcp,
     async_query_alpha_vantage_mcp
 )
-from functions.utils.scheduler import MacroScheduler
-from functions.utils.calibration_agent import MacroSurpriseCalibrationAgent
+from functions.utils.macro.scheduler import MacroScheduler
+from functions.utils.macro.calibration_agent import MacroSurpriseCalibrationAgent
 
 # ---------------------------------------------------------------------------
 # Module-level singletons

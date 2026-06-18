@@ -14,13 +14,13 @@ if sentiment_dir not in sys.path:
 # Import package modules
 try:
     from functions.aggregator.aggregator import fetch_aggregate_all_news
-    from functions.utils.read_and_clean import read_file_content, extract_and_clean_response
-    from functions.utils.build import build_vector_store
-    from functions.utils.config import generate_config
+    from functions.utils.common.read_and_clean import read_file_content, extract_and_clean_response
+    from functions.utils.common.build import build_vector_store
+    from functions.utils.common.config import generate_config
     from functions.tools.prepare_articles import prepare_articles, assign_label
     from functions.agents import create_scorer_agent, create_cio_agent, create_decomposition_agent
     from functions.tools.openbb import fetch_etf_holdings_from_openbb
-    from functions.utils.formulas import calculate_raw_sentiment, calculate_portfolio_sentiment, normalize_weights
+    from functions.utils.math.formulas import calculate_raw_sentiment, calculate_portfolio_sentiment, normalize_weights
     from functions.tools.custom_reply import custom_nested_chat_reply, extract_json_array
     from langchain_nvidia_ai_endpoints import NVIDIAEmbeddings
     from autogen import UserProxyAgent, register_function, initiate_chats
